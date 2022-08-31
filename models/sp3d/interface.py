@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from dataclasses import asdict, dataclass
 from typing import TypeAlias
 
@@ -11,32 +12,42 @@ Left: TypeAlias = float
 Bottom: TypeAlias = float
 Corner: TypeAlias = tuple[Back, Left, Bottom]
 
+Depth: TypeAlias = float
+Width: TypeAlias = float
+Height: TypeAlias = float
+Shape: TypeAlias = tuple[Depth, Width, Height]
+
 Image: TypeAlias = npt.NDArray[np.uint8]
 
 
 @dataclass
 class Block:
     name: str
-    depth: float
-    width: float
-    height: float
+    shape: Shape
+    rotatable_axes: tuple[int] = (0, 1, 2)
 
     def copy(self) -> Block:
         return Block(**asdict(self))
 
+    def choice_rotate_axis(self, rng: random.Random) -> int:
+        return rng.choice(self.rotatable_axes)
+
     def rotate(self, axis: int) -> None:
-        if axis == 0:
-            self.width, self.height == self.height, self.width
-        elif axis == 1:
-            self.depth, self.height = self.height, self.depth
-        elif axis == 2:
-            self.depth, self.width = self.width, self.depth
-        else:
-            raise ValueError
+        assert axis in self.rotatable_axes and isinstance(axis, int)
+        i = (axis + 1) % 3
+        j = (axis + 2) % 3
+        self.shape[i], self.shape[j] = self.shape[j], self.shape[i]
+        rotatable_axes = (axis,)
+        if i in self.rotatable_axes:
+            rotatable_axes += (j,)
+        if j in self.rotatable_axes:
+            rotatable_axes += (i,)
+        self.rotatable_axes = rotatable_axes
 
 
 @dataclass
 class Request:
+    container_shape: Shape
     blocks: list[Block]
 
     @property

@@ -4,12 +4,17 @@ import sys
 import time
 from typing import Iterator
 
-from models.sp3d.interface import Corner, Image, Request, Response
+import cv2
+import numpy as np
+import numpy.typing as npt
+
+from models.sp3d.interface import Corner, Image, Request, Response, Shape
 from models.sp3d.logger import get_logger
+from models.sp3d.visualizer import Visulalizer
 
 
 class Solver:
-    def __init__(self, request: Request, rng: random.Random) -> None:
+    def __init__(self, request: Request, rng: random.Random = random.Random()) -> None:
         self.request = request
         self.rng = rng
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
@@ -24,8 +29,10 @@ class Solver:
         self.opt_depth = depth
         self.opt_corners = corners
 
+        self.visualizer = Visulalizer(self.request.container_shape)
+
     def __calc_depth_and_corners(self) -> tuple[float, list[Corner]]:
-        pass
+        return 0.0, []
 
     def __swap(self) -> bool:
         idx1, idx2 = self.rng.choices(range(self.request.n_blocks), k=2)
@@ -49,7 +56,7 @@ class Solver:
 
     def __rotate(self) -> bool:
         idx = self.rng.choice(range(self.request.n_blocks))
-        axis = self.rng.choice(range(3))
+        axis = self.blocks[idx].choice_rotate_axis(self.rng)
         # rotate
         self.blocks[idx].rotate(axis)
         depth, corners = self.__calc_depth_and_corners()
@@ -80,8 +87,8 @@ class Solver:
             if n_iter % 100 == 0:
                 yield self.render()
 
-    def render(self) -> Image:
-        pass
+    def render(self, size: int = 500, padding: int = 20) -> Image:
+        return self.visualizer.render(size, padding)
 
     def solve(self, max_iter: int) -> Response:
         try:
@@ -99,3 +106,18 @@ class Solver:
             self.logger.info("keyboard interrupted")
         response = Response(self.blocks, self.opt_corners)
         return response
+
+
+if __name__ == "__main__":
+    request = Request((150.0, 100.0, 100.0), [])
+    solver = Solver(request)
+    image = solver.render(size=800)
+    try:
+        cv2.imshow("", image)
+        while True:
+            if cv2.waitKey(1) & 0xff == 27:
+                break
+    except KeyboardInterrupt:
+        pass
+    finally:
+        cv2.destroyAllWindows()
