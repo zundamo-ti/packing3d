@@ -5,10 +5,8 @@ import time
 from typing import Iterator
 
 import cv2
-import numpy as np
-import numpy.typing as npt
 
-from models.sp3d.interface import Corner, Image, Request, Response, Shape
+from models.sp3d.interface import Corner, Image, Request, Response
 from models.sp3d.logger import get_logger
 from models.sp3d.visualizer import Visulalizer
 
@@ -111,7 +109,7 @@ class Solver:
 if __name__ == "__main__":
     request = Request((150.0, 100.0, 100.0), [])
     solver = Solver(request)
-    image = solver.render(size=800)
+    image = solver.render()
     try:
         cv2.imshow("", image)
         while True:
