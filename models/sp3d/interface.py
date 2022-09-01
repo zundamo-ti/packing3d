@@ -38,6 +38,10 @@ class Block:
     def copy(self) -> Block:
         return Block(**asdict(self))
 
+    @property
+    def volume(self) -> float:
+        return self.shape[0] * self.shape[1] * self.shape[2]
+
     def choice_rotate_axis(self, rng: random.Random) -> int:
         return rng.choice(self.rotatable_axes)
 

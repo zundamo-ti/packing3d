@@ -35,7 +35,7 @@ class Solver:
     def __initialized_order(self) -> list[int]:
         return [
             idx for idx, _ in sorted(
-                enumerate(self.blocks), key=lambda t: t[1].shape, reverse=True
+                enumerate(self.blocks), key=lambda t: t[1].volume, reverse=True
             )
         ]
 
@@ -117,15 +117,15 @@ class Solver:
             transit = self.__swap()
         else:
             transit = self.__rotate()
-        if transit:
+        if transit and self.depth <= self.opt_depth:
             self.opt_depth = self.depth
             self.opt_corners = self.corners.copy()
         return transit
 
-    def loop(self, max_iter: int, size: int, padding: int) -> Iterator[Image]:
+    def loop(self, max_iter: int, size: int, padding: int) -> Iterator[tuple[float, Image]]:
         for n_iter in range(1, max_iter + 1):
-            if n_iter % 1 == 0:
-                yield self.render(size, padding)
+            if n_iter % 1 == 0:                
+                yield self.opt_depth, self.render(size, padding)
             self.transit()
 
     def render(self, size: int, padding: int) -> Image:
