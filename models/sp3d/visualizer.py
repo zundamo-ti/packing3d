@@ -133,26 +133,24 @@ class Visulalizer:
         dwh = self.corner_to_pos(
             (back + depth, left + width, bottom + height), size, padding
         )
-        box_image = np.zeros(image.shape, np.uint8)
         cv2.fillPoly(
-            box_image,
+            image,
             [np.array((d, dh, dwh, dw)).reshape((-1, 1, 2)).astype(np.int32)],
-            whiten(color, 0.5),
+            whiten(color, 0.0),
             cv2.LINE_AA,
         )
         cv2.fillPoly(
-            box_image,
+            image,
             [np.array((w, dw, dwh, wh)).reshape((-1, 1, 2)).astype(np.int32)],
             whiten(color, 0.25),
             cv2.LINE_AA,
         )
         cv2.fillPoly(
-            box_image,
+            image,
             [np.array((h, wh, dwh, dh)).reshape((-1, 1, 2)).astype(np.int32)],
-            whiten(color, 0.0),
+            whiten(color, 0.5),
             cv2.LINE_AA,
         )
-        image = cv2.addWeighted(image, 1.0, box_image, -0.5, 0)
         return image
 
     def render(

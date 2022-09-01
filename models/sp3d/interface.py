@@ -45,7 +45,9 @@ class Block:
         assert axis in self.rotatable_axes and isinstance(axis, int)
         i = (axis + 1) % 3
         j = (axis + 2) % 3
-        self.shape[i], self.shape[j] = self.shape[j], self.shape[i]
+        shape = list(self.shape)
+        shape[i], shape[j] = shape[j], shape[i]
+        self.shape = tuple(shape)
         rotatable_axes: tuple[int, ...] = (axis,)
         if i in self.rotatable_axes:
             rotatable_axes += (j,)

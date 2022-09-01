@@ -114,8 +114,8 @@ def calc_front_and_corner(
                 )
                 if settlable and stable:
                     x_coord = xs[x_idx][0]
-                    y_coord = xs[y_idx][0]
-                    z_coord = xs[z_idx][0]
+                    y_coord = ys[y_idx][0]
+                    z_coord = zs[z_idx][0]
                     front = x_coord + new_shape[0]
                     return front, (x_coord, y_coord, z_coord)
     raise NoStablePointFound
