@@ -1,9 +1,11 @@
 import logging
-from io import TextIOBase
+from typing import TextIO
 
 
-def get_logger(name: str, stream: TextIOBase) -> logging.Logger:
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+def get_logger(name: str, stream: TextIO) -> logging.Logger:
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     handler = logging.StreamHandler(stream)
     handler.setFormatter(formatter)
     logger = logging.getLogger(name)

@@ -17,14 +17,23 @@ Width: TypeAlias = float
 Height: TypeAlias = float
 Shape: TypeAlias = tuple[Depth, Width, Height]
 
+Front: TypeAlias = float
+Right: TypeAlias = float
+Top: TypeAlias = float
+Box: TypeAlias = tuple[Back, Front, Left, Right, Bottom, Top]
+
 Image: TypeAlias = npt.NDArray[np.uint8]
+Color: TypeAlias = tuple[int, int, int]
+
+INF = 1e9
 
 
 @dataclass
 class Block:
     name: str
     shape: Shape
-    rotatable_axes: tuple[int] = (0, 1, 2)
+    color: Color
+    rotatable_axes: tuple[int, ...] = (0, 1, 2)
 
     def copy(self) -> Block:
         return Block(**asdict(self))
@@ -37,7 +46,7 @@ class Block:
         i = (axis + 1) % 3
         j = (axis + 2) % 3
         self.shape[i], self.shape[j] = self.shape[j], self.shape[i]
-        rotatable_axes = (axis,)
+        rotatable_axes: tuple[int, ...] = (axis,)
         if i in self.rotatable_axes:
             rotatable_axes += (j,)
         if j in self.rotatable_axes:
