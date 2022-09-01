@@ -6,35 +6,48 @@ from typing import Iterator
 
 import cv2
 
-from models.sp3d.interface import INF, Block, Color, Corner, Image, Request, Response, Shape
+from models.sp3d.interface import (
+    INF,
+    Block,
+    Color,
+    Corner,
+    Image,
+    Request,
+    Response,
+    Shape,
+)
 from models.sp3d.logger import get_logger
-from models.sp3d.utils import calc_front_and_corner
+from models.sp3d.utils import calc_score_and_corner
 from models.sp3d.visualizer import Visulalizer
 
 
 class Solver:
     def __init__(
-        self, request: Request, rng: random.Random = random.Random()
+        self,
+        request: Request,
+        initial_temparature: float = 0.0,
+        rng: random.Random = random.Random(),
     ) -> None:
         self.request = request
         self.rng = rng
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
         self.blocks = [block.copy() for block in self.request.blocks]
         self.packing_order = self.__initialized_order()
-        self.temparature: float = 0.0
+        self.temparature: float = initial_temparature
 
-        depth, corners = self.__calc_depth_and_corners()
-        self.depth: float = depth
+        score, corners = self.__calc_depth_and_corners()
+        self.score: float = score
         self.corners: list[Corner] = corners
 
-        self.opt_depth: float = depth
+        self.opt_score: float = score
         self.opt_corners: list[Corner] = corners
 
         self.visualizer = Visulalizer(self.request.container_shape)
 
     def __initialized_order(self) -> list[int]:
         return [
-            idx for idx, _ in sorted(
+            idx
+            for idx, _ in sorted(
                 enumerate(self.blocks), key=lambda t: t[1].volume, reverse=True
             )
         ]
@@ -49,29 +62,29 @@ class Solver:
             (3 * INF, 3 * INF, 3 * INF),
             (3 * INF, 3 * INF, 3 * INF),
             (3 * INF, 3 * INF, 3 * INF),
+            (3 * INF, 3 * INF, 3 * INF),
+            (3 * INF, 3 * INF, 3 * INF),
             # (3 * INF, 3 * INF, 3 * INF),
-            (3 * INF, 3 * INF, 3 * INF),
-            (3 * INF, 3 * INF, 3 * INF),
         ]
         corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
             (-3 * INF, -INF, -INF),
             (-INF, -3 * INF, -INF),
             (-INF, -INF, -3 * INF),
-            # (container_depth, -INF, -INF),
+            (container_depth, -INF, -INF),
             (-INF, container_width, -INF),
-            (-INF, -INF, container_height),
+            # (-INF, -INF, container_height),
         ]
-        max_depth = 0.0
+        max_score = 0.0
         for order in self.packing_order:
             new_shape = self.blocks[order].shape
-            depth, corner = calc_front_and_corner(new_shape, shapes, _corners)
-            max_depth = max(max_depth, depth)
+            score, corner = calc_score_and_corner(new_shape, shapes, _corners)
+            max_score = max(max_score, score)
             shapes.append(new_shape)
             _corners.append(corner)
         for idx, order in enumerate(self.packing_order):
             corners[order] = _corners[idx + 5]
-        return max_depth, corners
+        return max_score, corners
 
     def __swap(self) -> bool:
         idx1, idx2 = self.rng.choices(range(self.request.n_blocks), k=2)
@@ -80,13 +93,13 @@ class Solver:
             self.packing_order[idx2],
             self.packing_order[idx1],
         )
-        depth, corners = self.__calc_depth_and_corners()
-        diff = depth - self.depth
+        score, corners = self.__calc_depth_and_corners()
+        diff = score - self.score
         transit = math.log(self.rng.random()) * self.temparature <= -diff
         if transit:
             # update
             self.corners = corners
-            self.depth = depth
+            self.score = score
         else:
             # rollback
             self.packing_order[idx1], self.packing_order[idx2] = (
@@ -100,13 +113,13 @@ class Solver:
         axis = self.blocks[idx].choice_rotate_axis(self.rng)
         # rotate
         self.blocks[idx].rotate(axis)
-        depth, corners = self.__calc_depth_and_corners()
-        diff = depth - self.depth
+        score, corners = self.__calc_depth_and_corners()
+        diff = score - self.score
         transit = math.log(self.rng.random()) * self.temparature <= -diff
         if transit:
             # update
             self.corners = corners
-            self.depth = depth
+            self.score = score
         else:
             # rollback
             self.blocks[idx].rotate(axis)
@@ -117,19 +130,23 @@ class Solver:
             transit = self.__swap()
         else:
             transit = self.__rotate()
-        if transit and self.depth <= self.opt_depth:
-            self.opt_depth = self.depth
+        if transit and self.score <= self.opt_score:
+            self.opt_score = self.score
             self.opt_corners = self.corners.copy()
         return transit
 
-    def loop(self, max_iter: int, size: int, padding: int) -> Iterator[tuple[float, Image]]:
+    def loop(
+        self, max_iter: int, size: int, padding: int
+    ) -> Iterator[tuple[float, Image]]:
         for n_iter in range(1, max_iter + 1):
-            if n_iter % 1 == 0:                
-                yield self.opt_depth, self.render(size, padding)
+            if n_iter % 1 == 0:
+                yield self.opt_score, self.render(size, padding)
             self.transit()
 
     def render(self, size: int, padding: int) -> Image:
-        return self.visualizer.render(self.blocks, self.opt_corners, size, padding)
+        return self.visualizer.render(
+            self.blocks, self.opt_corners, size, padding
+        )
 
     def solve(self, max_iter: int) -> Response:
         try:
@@ -140,7 +157,7 @@ class Solver:
                 if n_iter % 100 == 0:
                     t = time.time() - start
                     self.logger.info(
-                        f"optimal depth: {self.opt_depth}"
+                        f"optimal score: {self.opt_score}"
                         f"in {int(t * 100) / 100} seconds."
                     )
             self.logger.info("finish solving !")
@@ -152,6 +169,7 @@ class Solver:
 
 if __name__ == "__main__":
     import os
+
     def random_shape(block_size: int, rng: random.Random) -> Shape:
         min_size = block_size // 10
         max_size = 3 * block_size // 10
@@ -183,7 +201,9 @@ if __name__ == "__main__":
     solver = Solver(request)
     image = solver.render(size, padding)
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter("./movie.mp4", fourcc, 20.0, image.shape[:2][::-1])
+    writer = cv2.VideoWriter(
+        "./movie.mp4", fourcc, 20.0, image.shape[:2][::-1]
+    )
     try:
         for image in solver.loop(max_iter, size, padding):
             cv2.imshow("", image)
