@@ -4,3 +4,7 @@ class Error(Exception):
 
 class NoStablePointFound(Error):
     pass
+
+
+class NoStackablePointFound(Error):
+    pass

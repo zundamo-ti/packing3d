@@ -105,8 +105,7 @@ class Visulalizer:
         self,
         image: Image,
         corner: Corner,
-        shape: Shape,
-        color: Color,
+        block: Block,
         size: int,
         padding: int,
     ) -> Image:
@@ -118,7 +117,7 @@ class Visulalizer:
             )
 
         back, left, bottom = corner
-        depth, width, height = shape
+        depth, width, height = block.shape
         d = self.corner_to_pos((back + depth, left, bottom), size, padding)
         w = self.corner_to_pos((back, left + width, bottom), size, padding)
         h = self.corner_to_pos((back, left, bottom + height), size, padding)
@@ -137,21 +136,24 @@ class Visulalizer:
         cv2.fillPoly(
             image,
             [np.array((d, dh, dwh, dw)).reshape((-1, 1, 2)).astype(np.int32)],
-            whiten(color, 0.0),
+            whiten(block.color, 0.0),
             cv2.LINE_AA,
         )
         cv2.fillPoly(
             image,
             [np.array((w, dw, dwh, wh)).reshape((-1, 1, 2)).astype(np.int32)],
-            whiten(color, 0.25),
+            whiten(block.color, 0.25),
             cv2.LINE_AA,
         )
         cv2.fillPoly(
             image,
             [np.array((h, wh, dwh, dh)).reshape((-1, 1, 2)).astype(np.int32)],
-            whiten(color, 0.5),
+            whiten(block.color, 0.5),
             cv2.LINE_AA,
         )
+        if not block.stackable:
+            cv2.line(image, h, dwh, (0, 0, 0), 1, cv2.LINE_AA)
+            cv2.line(image, wh, dh, (0, 0, 0), 1, cv2.LINE_AA)
         return image
 
     def render(
@@ -183,13 +185,8 @@ class Visulalizer:
             return t[1]
 
         for block, corner in sorted(zip(blocks, corners), key=key):
-            depth, width, height = block.shape
-            back, left, bottom = corner
-            front = back + depth
-            right = left + width
-            top = bottom + height
             image = self.draw_box(
-                image, corner, block.shape, block.color, size, padding
+                image, corner, block, size, padding
             )
         image = self.draw_container(
             image,

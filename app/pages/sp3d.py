@@ -46,6 +46,15 @@ with st.sidebar:
     n_blocks = int(
         st.number_input("Number of Blocks", min_value=1, step=1, value=20)
     )
+    n_stackables = int(
+        st.number_input(
+            "Number of Stackable Blocks",
+            min_value=0,
+            max_value=n_blocks,
+            step=1,
+            value=5,
+        )
+    )
     block_size = int(
         st.number_input(
             "Block Size",
@@ -58,7 +67,7 @@ with st.sidebar:
     allow_rotate = st.checkbox("Allow Rotate", True)
     max_iter = int(st.number_input("Max Iteration", min_value=1, value=10000))
     temparature = float(
-        st.number_input("Temparature", min_value=0.0, value=1.0, step=1.0)
+        st.number_input("Temparature", min_value=0.0, value=1.0, step=0.0)
     )
     container_shape = (container_depth, container_width, container_height)
     container_volume = container_depth * container_width * container_height
@@ -79,8 +88,17 @@ if "image" not in st.session_state or reset:
             f"block{i}",
             random_shape(block_size, data_rng),
             random_color(data_rng),
+            stackable=True,
         )
-        for i in range(n_blocks)
+        for i in range(n_blocks - n_stackables)
+    ] + [
+        Block(
+            f"block{i}",
+            random_shape(block_size, data_rng),
+            random_color(data_rng),
+            stackable=False,
+        )
+        for i in range(n_stackables)
     ]
     total_volume = sum(block.volume for block in blocks)
     request = Request(container_shape, blocks)

@@ -1,8 +1,10 @@
+from typing import Optional
+
 import numpy as np
 import numpy.typing as npt
 
-from models.sp3d.error import NoStablePointFound
-from models.sp3d.interface import INF, Box, Corner, Shape
+from models.sp3d.error import NoStablePointFound, NoStackablePointFound
+from models.sp3d.interface import INF, Block, Box, Corner, Shape
 
 Event = tuple[float, int, int]
 
@@ -49,7 +51,11 @@ def calc_events(
 
 
 def calc_stable_index(
-    n_boxes: int, xs: list[Event], ys: list[Event], zs: list[Event]
+    n_boxes: int,
+    xs: list[Event],
+    ys: list[Event],
+    zs: list[Event],
+    stackable: list[bool],
 ) -> tuple[int, ...]:
     x_idx_flag_to_order = {
         (idx, flag): order for order, (_, flag, idx) in enumerate(xs)
@@ -62,6 +68,7 @@ def calc_stable_index(
     }
     size = 2 * n_boxes
     overlaps = np.zeros((size, size, size), np.int32)
+    unstackable = np.zeros((size, size, size), np.int32)
     for idx in range(n_boxes):
         back_order = x_idx_flag_to_order[idx, 1]
         front_order = x_idx_flag_to_order[idx, -1]
@@ -78,36 +85,50 @@ def calc_stable_index(
         overlaps[front_order, left_order, top_order] += 1
         overlaps[front_order, right_order, bottom_order] += 1
         overlaps[front_order, right_order, top_order] -= 1
+
+        if not stackable[idx]:
+            unstackable[back_order, left_order, top_order] += 1
+            unstackable[back_order, right_order, top_order] -= 1
+            unstackable[front_order, left_order, top_order] -= 1
+            unstackable[front_order, right_order, top_order] += 1
     overlaps = np.cumsum(
         np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0
     )
+    unstackable = np.cumsum(np.cumsum(unstackable, axis=1), axis=0)
     shifted_back = np.roll(overlaps, shift=1, axis=0)
     shifted_left = np.roll(overlaps, shift=1, axis=1)
     shifted_down = np.roll(overlaps, shift=1, axis=2)
-    stable_indices: list[tuple[int, ...]] = list(
-        zip(
-            *np.where(
-                (overlaps == 0)
-                & (shifted_back > 0)
-                & (shifted_left > 0)
-                & (shifted_down > 0)
-            )
-        )
+    stable: npt.NDArray[np.int32] = (
+        (overlaps == 0)
+        & (shifted_back > 0)
+        & (shifted_left > 0)
+        & (shifted_down > 0)
     )
+    settlable: npt.NDArray[np.int32] = stable & (unstackable == 0)
+    stable_indices: list[tuple[int, ...]] = list(zip(*np.where(settlable)))
     stable_indices.sort(key=lambda t: (t[2], t[1], t[0]))
     if len(stable_indices) > 0:
         return stable_indices[0]
     else:
-        raise NoStablePointFound
+        if np.sum(stable) > 0:
+            raise NoStackablePointFound
+        else:
+            raise NoStablePointFound
 
 
 def calc_score_and_corner(
-    new_shape: Shape, shapes: list[Shape], corners: list[Corner]
-) -> tuple[float, Corner]:
+    block: Block, blocks: list[Block], corners: list[Corner]
+) -> Optional[tuple[float, Corner]]:
+    new_shape = block.shape
+    shapes = [block.shape for block in blocks]
     nfps = calc_no_fit_poly(new_shape, shapes, corners)
     n_boxes = len(nfps)
     xs, ys, zs = calc_events(nfps)
-    x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs)
+    stackable = [block.stackable for block in blocks]
+    try:
+        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable)
+    except NoStackablePointFound:
+        return INF, (INF, INF, INF)
     x_coord = xs[x_idx][0]
     y_coord = ys[y_idx][0]
     z_coord = zs[z_idx][0]

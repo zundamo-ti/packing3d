@@ -33,7 +33,13 @@ class Block:
     name: str
     shape: Shape
     color: Color
-    rotatable_axes: tuple[int, ...] = (0, 1, 2)
+    stackable: bool = True
+
+    def __post_init__(self) -> None:
+        if not self.stackable:
+            self.rotatable_axes = (2,)
+        else:
+            self.rotatable_axes = (0, 1, 2)
 
     def copy(self) -> Block:
         return Block(**asdict(self))
@@ -52,12 +58,6 @@ class Block:
         shape = list(self.shape)
         shape[i], shape[j] = shape[j], shape[i]
         self.shape = tuple(shape)
-        rotatable_axes: tuple[int, ...] = (axis,)
-        if i in self.rotatable_axes:
-            rotatable_axes += (j,)
-        if j in self.rotatable_axes:
-            rotatable_axes += (i,)
-        self.rotatable_axes = rotatable_axes
 
 
 @dataclass

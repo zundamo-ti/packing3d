@@ -48,13 +48,13 @@ class Solver:
             container_width,
             container_height,
         ) = self.request.container_shape
-        shapes: list[Shape] = [
-            (3 * INF, 3 * INF, 3 * INF),
-            (3 * INF, 3 * INF, 3 * INF),
-            (3 * INF, 3 * INF, 3 * INF),
-            (3 * INF, 3 * INF, 3 * INF),
-            (3 * INF, 3 * INF, 3 * INF),
-            # (3 * INF, 3 * INF, 3 * INF),
+        blocks = [
+            Block(f"wall1", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
+            Block(f"wall2", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
+            Block(f"wall3", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
+            Block(f"wall4", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
+            Block(f"wall5", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
+            # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
         ]
         corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
@@ -67,10 +67,10 @@ class Solver:
         ]
         max_score = 0.0
         for order in self.packing_order:
-            new_shape = self.blocks[order].shape
-            score, corner = calc_score_and_corner(new_shape, shapes, _corners)
+            block = self.blocks[order]
+            score, corner = calc_score_and_corner(block, blocks, _corners)
             max_score = max(max_score, score)
-            shapes.append(new_shape)
+            blocks.append(block)
             _corners.append(corner)
         for idx, order in enumerate(self.packing_order):
             corners[order] = _corners[idx + 5]
