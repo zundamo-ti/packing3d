@@ -6,7 +6,7 @@ from typing import Iterator
 
 import cv2
 
-from models.sp3d.interface import INF, Block, Color, Corner, Image, Request, Response, Shape
+from models.sp3d.interface import INF, Block, Corner, Image, Request, Response
 from models.sp3d.logger import get_logger
 from models.sp3d.utils import calc_score_and_corner
 from models.sp3d.visualizer import Visulalizer
@@ -20,7 +20,6 @@ class Solver:
     ) -> None:
         self.request = request
         self.rng = rng
-        self.allow_hover = True
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
         self.blocks = [block.copy() for block in self.request.blocks]
         self.packing_order = self.__initialized_order()
@@ -50,12 +49,23 @@ class Solver:
             container_height,
         ) = self.request.container_shape
         blocks = [
-            Block(f"wall1", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
-            Block(f"wall2", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
-            Block(f"wall3", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
-            Block(f"wall4", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
-            Block(f"wall5", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
-            # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True),
+            Block(
+                "wall1", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall2", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall3", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall4", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall5", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF),
+            # (0, 0, 0), stackable=True),
         ]
         corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
@@ -69,7 +79,7 @@ class Solver:
         max_score = 0.0
         for order in self.packing_order:
             block = self.blocks[order]
-            score, corner = calc_score_and_corner(block, blocks, _corners, self.allow_hover)
+            score, corner = calc_score_and_corner(block, blocks, _corners)
             max_score = max(max_score, score)
             blocks.append(block)
             _corners.append(corner)
@@ -169,51 +179,3 @@ class Solver:
             self.logger.info("keyboard interrupted")
         response = Response(self.blocks, self.opt_corners)
         return response
-
-
-if __name__ == "__main__":
-    import os
-
-    def random_shape(block_size: int, rng: random.Random) -> Shape:
-        min_size = block_size // 10
-        max_size = 3 * block_size // 10
-        return (
-            5 * rng.randint(min_size, max_size),
-            5 * rng.randint(min_size, max_size),
-            5 * rng.randint(min_size, max_size),
-        )
-
-    def random_color(rng: random.Random) -> Color:
-        return (
-            rng.randint(0, 255),
-            rng.randint(0, 255),
-            rng.randint(0, 255),
-        )
-
-    rng = random.Random()
-    block_size = 40
-    n_blocks = 12
-    container_shape = (150, 100, 100)
-    max_iter = 100
-    size = 500
-    padding = 20
-    blocks = [
-        Block(f"block{i}", random_shape(block_size, rng), random_color(rng))
-        for i in range(n_blocks)
-    ]
-    request = Request(container_shape, blocks)
-    solver = Solver(request)
-    image = solver.render(size, padding)
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(
-        "./movie.mp4", fourcc, 20.0, image.shape[:2][::-1]
-    )
-    try:
-        for image in solver.loop(max_iter, size, padding):
-            cv2.imshow("", image)
-            cv2.waitKey(1)
-            writer.write(image)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        cv2.destroyAllWindows()

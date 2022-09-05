@@ -184,9 +184,7 @@ class Visulalizer:
             return t[1]
 
         for block, corner in sorted(zip(blocks, corners), key=key):
-            image = self.draw_box(
-                image, corner, block, size, padding
-            )
+            image = self.draw_box(image, corner, block, size, padding)
         image = self.draw_container(
             image,
             (0.0, 0.0, 0.0),
