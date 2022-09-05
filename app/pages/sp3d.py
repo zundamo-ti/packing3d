@@ -1,6 +1,5 @@
 import random
 
-import cv2
 import streamlit as st
 
 from models.sp3d.interface import Block, Color, Image, Request, Shape
@@ -67,12 +66,12 @@ with st.sidebar:
     allow_rotate = st.checkbox("Allow Rotate", True)
     max_iter = int(st.number_input("Max Iteration", min_value=1, value=10000))
     temparature = float(
-        st.number_input("Temparature", min_value=0.0, value=1.0, step=0.0)
+        st.number_input("Temparature", min_value=0.0, value=0.0, step=1.0)
     )
     container_shape = (container_depth, container_width, container_height)
     container_volume = container_depth * container_width * container_height
 
-size = 700
+size = 750
 padding = 20
 
 col1, col2, col3 = st.columns(3)
@@ -113,9 +112,7 @@ pf_holder.write(f"packing factor = {int(1000 * packing_factor) / 10} %")
 score_holder.write(f"optimal score = {st.session_state['score']}")
 image_holder.image(st.session_state["image"])
 use_solver: Solver = st.session_state["solver"]
-fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 im: Image = st.session_state["image"]
-writer = cv2.VideoWriter("./movie.mp4", fourcc, 20.0, im.shape[:2][::-1])
 if calculate:
     stop = col3.button("Stop")
     for score, image in use_solver.loop(
@@ -123,7 +120,6 @@ if calculate:
     ):
         score_holder.write(f"optimal score = {score}")
         image_holder.image(image)
-        writer.write(image)
         st.session_state["score"] = score
         st.session_state["image"] = image
         if stop:

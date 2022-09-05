@@ -56,6 +56,7 @@ def calc_stable_index(
     ys: list[Event],
     zs: list[Event],
     stackable: list[bool],
+    allow_hover: bool = True,
 ) -> tuple[int, ...]:
     x_idx_flag_to_order = {
         (idx, flag): order for order, (_, flag, idx) in enumerate(xs)
@@ -91,10 +92,11 @@ def calc_stable_index(
             unstackable[back_order, right_order, top_order] -= 1
             unstackable[front_order, left_order, top_order] -= 1
             unstackable[front_order, right_order, top_order] += 1
-    overlaps = np.cumsum(
-        np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0
-    )
-    unstackable = np.cumsum(np.cumsum(unstackable, axis=1), axis=0)
+    overlaps = np.cumsum(np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0)
+    if allow_hover:
+        unstackable = np.cumsum(np.cumsum(unstackable, axis=1), axis=0)
+    else:
+        unstackable = np.cumsum(np.cumsum(np.cumsum(unstackable, axis=2), axis=1), axis=0)
     shifted_back = np.roll(overlaps, shift=1, axis=0)
     shifted_left = np.roll(overlaps, shift=1, axis=1)
     shifted_down = np.roll(overlaps, shift=1, axis=2)
@@ -117,7 +119,7 @@ def calc_stable_index(
 
 
 def calc_score_and_corner(
-    block: Block, blocks: list[Block], corners: list[Corner]
+    block: Block, blocks: list[Block], corners: list[Corner], allow_hover: bool
 ) -> Optional[tuple[float, Corner]]:
     new_shape = block.shape
     shapes = [block.shape for block in blocks]
@@ -126,7 +128,7 @@ def calc_score_and_corner(
     xs, ys, zs = calc_events(nfps)
     stackable = [block.stackable for block in blocks]
     try:
-        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable)
+        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable, allow_hover)
     except NoStackablePointFound:
         return INF, (INF, INF, INF)
     x_coord = xs[x_idx][0]

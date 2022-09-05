@@ -20,6 +20,7 @@ class Solver:
     ) -> None:
         self.request = request
         self.rng = rng
+        self.allow_hover = True
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
         self.blocks = [block.copy() for block in self.request.blocks]
         self.packing_order = self.__initialized_order()
@@ -68,7 +69,7 @@ class Solver:
         max_score = 0.0
         for order in self.packing_order:
             block = self.blocks[order]
-            score, corner = calc_score_and_corner(block, blocks, _corners)
+            score, corner = calc_score_and_corner(block, blocks, _corners, self.allow_hover)
             max_score = max(max_score, score)
             blocks.append(block)
             _corners.append(corner)
