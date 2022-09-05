@@ -84,7 +84,7 @@ def calc_stable_index(
     shifted_back = np.roll(overlaps, shift=1, axis=0)
     shifted_left = np.roll(overlaps, shift=1, axis=1)
     shifted_down = np.roll(overlaps, shift=1, axis=2)
-    stable_indices = list(
+    stable_indices: list[tuple[int, ...]] = list(
         zip(
             *np.where(
                 (overlaps == 0)
@@ -96,8 +96,7 @@ def calc_stable_index(
     )
     stable_indices.sort(key=lambda t: (t[2], t[1], t[0]))
     if len(stable_indices) > 0:
-        stable_index: tuple[int, ...] = stable_indices[0]
-        return stable_index
+        return stable_indices[0]
     else:
         raise NoStablePointFound
 
@@ -114,27 +113,3 @@ def calc_score_and_corner(
     z_coord = zs[z_idx][0]
     score = z_coord + new_shape[2]
     return score, (x_coord, y_coord, z_coord)
-
-
-if __name__ == "__main__":
-    shapes = [
-        (300, 300, 300),
-        (300, 300, 300),
-        (300, 300, 300),
-        (300, 300, 300),
-        (300, 300, 300),
-        (40, 40, 40),
-        (40, 40, 40),
-    ]
-    corners = [
-        (-300, -100, -100),
-        (-100, -300, -100),
-        (-100, -100, -300),
-        (-100, 100, -100),
-        (-100, -100, 100),
-        (0, 0, 0),
-        (0, 0, 40),
-    ]
-    new_shape = (40, 40, 40)
-    score, corner = calc_score_and_corner(new_shape, shapes, corners)
-    print(score, corner)

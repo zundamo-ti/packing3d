@@ -6,16 +6,7 @@ from typing import Iterator
 
 import cv2
 
-from models.sp3d.interface import (
-    INF,
-    Block,
-    Color,
-    Corner,
-    Image,
-    Request,
-    Response,
-    Shape,
-)
+from models.sp3d.interface import INF, Block, Color, Corner, Image, Request, Response, Shape
 from models.sp3d.logger import get_logger
 from models.sp3d.utils import calc_score_and_corner
 from models.sp3d.visualizer import Visulalizer
@@ -25,7 +16,6 @@ class Solver:
     def __init__(
         self,
         request: Request,
-        initial_temparature: float = 0.0,
         rng: random.Random = random.Random(),
     ) -> None:
         self.request = request
@@ -33,13 +23,13 @@ class Solver:
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
         self.blocks = [block.copy() for block in self.request.blocks]
         self.packing_order = self.__initialized_order()
-        self.temparature: float = initial_temparature
 
         score, corners = self.__calc_depth_and_corners()
         self.score: float = score
         self.corners: list[Corner] = corners
 
         self.opt_score: float = score
+        self.opt_blocks: list[Block] = [block.copy() for block in self.blocks]
         self.opt_corners: list[Corner] = corners
 
         self.visualizer = Visulalizer(self.request.container_shape)
@@ -86,7 +76,7 @@ class Solver:
             corners[order] = _corners[idx + 5]
         return max_score, corners
 
-    def __swap(self) -> bool:
+    def __swap(self, temparature: float) -> bool:
         idx1, idx2 = self.rng.choices(range(self.request.n_blocks), k=2)
         # swap
         self.packing_order[idx1], self.packing_order[idx2] = (
@@ -95,7 +85,7 @@ class Solver:
         )
         score, corners = self.__calc_depth_and_corners()
         diff = score - self.score
-        transit = math.log(self.rng.random()) * self.temparature <= -diff
+        transit = math.log(self.rng.random()) * temparature <= -diff
         if transit:
             # update
             self.corners = corners
@@ -108,14 +98,14 @@ class Solver:
             )
         return transit
 
-    def __rotate(self) -> bool:
+    def __rotate(self, temparature: float) -> bool:
         idx = self.rng.choice(range(self.request.n_blocks))
         axis = self.blocks[idx].choice_rotate_axis(self.rng)
         # rotate
         self.blocks[idx].rotate(axis)
         score, corners = self.__calc_depth_and_corners()
         diff = score - self.score
-        transit = math.log(self.rng.random()) * self.temparature <= -diff
+        transit = math.log(self.rng.random()) * temparature <= -diff
         if transit:
             # update
             self.corners = corners
@@ -125,35 +115,48 @@ class Solver:
             self.blocks[idx].rotate(axis)
         return transit
 
-    def transit(self) -> bool:
-        if self.rng.random() < 0.5:
-            transit = self.__swap()
+    def transit(self, allow_rotate: bool, temparature: float) -> bool:
+        if self.rng.random() < 0.5 or not allow_rotate:
+            transit = self.__swap(temparature)
         else:
-            transit = self.__rotate()
+            transit = self.__rotate(temparature)
         if transit and self.score <= self.opt_score:
             self.opt_score = self.score
+            self.opt_blocks = [block.copy() for block in self.blocks]
             self.opt_corners = self.corners.copy()
         return transit
 
     def loop(
-        self, max_iter: int, size: int, padding: int
+        self,
+        max_iter: int,
+        allow_rotate: bool,
+        temparature: float,
+        size: int,
+        padding: int,
     ) -> Iterator[tuple[float, Image]]:
         for n_iter in range(1, max_iter + 1):
-            if n_iter % 1 == 0:
+            if n_iter % 10 == 0:
                 yield self.opt_score, self.render(size, padding)
-            self.transit()
+            self.transit(allow_rotate, temparature)
 
     def render(self, size: int, padding: int) -> Image:
         return self.visualizer.render(
-            self.blocks, self.opt_corners, size, padding
+            self.opt_blocks, self.opt_corners, size, padding
         )
 
-    def solve(self, max_iter: int) -> Response:
+    def solve(
+        self,
+        max_iter: int,
+        allow_rotate: bool,
+        temparature: float,
+    ) -> Response:
         try:
             self.logger.info("start solving ...")
             start = time.time()
             for n_iter in range(max_iter):
-                self.transit()
+                if self.opt_score <= self.request.container_shape[2]:
+                    break
+                self.transit(allow_rotate, temparature)
                 if n_iter % 100 == 0:
                     t = time.time() - start
                     self.logger.info(

@@ -55,9 +55,10 @@ with st.sidebar:
             step=10,
         )
     )
-    max_iter = int(st.number_input("Max Iteration", min_value=1, value=1000))
+    allow_rotate = st.checkbox("Allow Rotate", True)
+    max_iter = int(st.number_input("Max Iteration", min_value=1, value=10000))
     temparature = float(
-        st.number_input("Temparature", min_value=0.0, value=0.0, step=1.0)
+        st.number_input("Temparature", min_value=0.0, value=1.0, step=1.0)
     )
     container_shape = (container_depth, container_width, container_height)
     container_volume = container_depth * container_width * container_height
@@ -83,7 +84,7 @@ if "image" not in st.session_state or reset:
     ]
     total_volume = sum(block.volume for block in blocks)
     request = Request(container_shape, blocks)
-    solver = Solver(request, temparature)
+    solver = Solver(request)
     st.session_state["solver"] = solver
     st.session_state["score"] = solver.opt_score
     st.session_state["image"] = solver.render(size, padding)
@@ -99,7 +100,9 @@ im: Image = st.session_state["image"]
 writer = cv2.VideoWriter("./movie.mp4", fourcc, 20.0, im.shape[:2][::-1])
 if calculate:
     stop = col3.button("Stop")
-    for score, image in use_solver.loop(max_iter, size, padding):
+    for score, image in use_solver.loop(
+        max_iter, allow_rotate, temparature, size, padding
+    ):
         score_holder.write(f"optimal score = {score}")
         image_holder.image(image)
         writer.write(image)
