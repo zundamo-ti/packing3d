@@ -115,7 +115,7 @@ use_solver: Solver = st.session_state["solver"]
 im: Image = st.session_state["image"]
 if calculate:
     stop = col3.button("Stop")
-    for score, image in use_solver.loop(
+    for score, image in use_solver.loop_render(
         max_iter, allow_rotate, temparature, size, padding
     ):
         score_holder.write(f"optimal score = {score}")

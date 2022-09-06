@@ -4,8 +4,6 @@ import sys
 import time
 from typing import Iterator
 
-import cv2
-
 from models.sp3d.interface import INF, Block, Corner, Image, Request, Response
 from models.sp3d.logger import get_logger
 from models.sp3d.utils import calc_score_and_corner
@@ -137,7 +135,7 @@ class Solver:
             self.opt_corners = self.corners.copy()
         return transit
 
-    def loop(
+    def loop_render(
         self,
         max_iter: int,
         allow_rotate: bool,

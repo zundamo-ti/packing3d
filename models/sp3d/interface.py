@@ -34,9 +34,10 @@ class Block:
     shape: Shape
     color: Color
     stackable: bool = True
+    right_side_up: bool = False
 
     def __post_init__(self) -> None:
-        if not self.stackable:
+        if self.right_side_up:
             self.rotatable_axes = (2,)
         else:
             self.rotatable_axes = (0, 1, 2)

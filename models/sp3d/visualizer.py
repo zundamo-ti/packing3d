@@ -151,6 +151,10 @@ class Visulalizer:
             cv2.LINE_AA,
         )
         if not block.stackable:
+            cv2.line(image, d, dwh, (0, 0, 0), 1, cv2.LINE_AA)
+            cv2.line(image, dw, dh, (0, 0, 0), 1, cv2.LINE_AA)
+            cv2.line(image, w, dwh, (0, 0, 0), 1, cv2.LINE_AA)
+            cv2.line(image, wh, dw, (0, 0, 0), 1, cv2.LINE_AA)
             cv2.line(image, h, dwh, (0, 0, 0), 1, cv2.LINE_AA)
             cv2.line(image, wh, dh, (0, 0, 0), 1, cv2.LINE_AA)
         return image
