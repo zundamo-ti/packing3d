@@ -4,7 +4,7 @@ from typing import Literal
 import cv2
 import numpy as np
 
-from models.sp3d.interface import Block, Color, Corner, Image, Shape
+from src.interface import Block, Color, Corner, Image, Shape
 
 
 class Visulalizer:

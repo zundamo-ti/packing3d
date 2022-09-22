@@ -3,8 +3,8 @@ from typing import Optional
 import numpy as np
 import numpy.typing as npt
 
-from models.sp3d.error import NoStablePointFound, NoStackablePointFound
-from models.sp3d.interface import INF, Block, Box, Corner, Shape
+from src.error import NoStablePointFound, NoStackablePointFound
+from src.interface import INF, Block, Box, Corner, Shape
 
 Event = tuple[float, int, int]
 

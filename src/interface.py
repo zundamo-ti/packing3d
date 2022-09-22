@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, replace
 from typing import TypeAlias
 
 import numpy as np
@@ -43,7 +43,7 @@ class Block:
             self.rotatable_axes = (0, 1, 2)
 
     def copy(self) -> Block:
-        return Block(**asdict(self))
+        return replace(self)
 
     @property
     def volume(self) -> float:
@@ -63,12 +63,25 @@ class Block:
 
 @dataclass
 class Request:
-    container_shape: Shape
     blocks: list[Block]
 
     @property
     def n_blocks(self) -> int:
         return len(self.blocks)
+
+
+@dataclass
+class StripPackingRequest(Request):
+    container_shape: Shape
+
+
+@dataclass
+class BinPackingRequest(Request):
+    containers: list[Shape]
+
+    @property
+    def n_containers(self) -> int:
+        return len(self.containers)
 
 
 @dataclass

@@ -2,8 +2,8 @@ import random
 
 import streamlit as st
 
-from models.sp3d.interface import Block, Color, Image, Request, Shape
-from models.sp3d.solver import Solver
+from src.interface import Block, Color, Image, Shape, StripPackingRequest
+from src.solver import StripPackingSolver
 
 
 def random_shape(block_size: int, rng: random.Random) -> Shape:
@@ -100,8 +100,8 @@ if "image" not in st.session_state or reset:
         for i in range(n_stackables)
     ]
     total_volume = sum(block.volume for block in blocks)
-    request = Request(container_shape, blocks)
-    solver = Solver(request)
+    request = StripPackingRequest(blocks, container_shape)
+    solver = StripPackingSolver(request)
     st.session_state["solver"] = solver
     st.session_state["score"] = solver.opt_score
     st.session_state["image"] = solver.render(size, padding)
@@ -111,7 +111,7 @@ packing_factor: float = st.session_state["packing_factor"]
 pf_holder.write(f"packing factor = {int(1000 * packing_factor) / 10} %")
 score_holder.write(f"optimal score = {st.session_state['score']}")
 image_holder.image(st.session_state["image"])
-use_solver: Solver = st.session_state["solver"]
+use_solver: StripPackingSolver = st.session_state["solver"]
 im: Image = st.session_state["image"]
 if calculate:
     stop = col3.button("Stop")

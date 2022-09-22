@@ -4,18 +4,27 @@ import sys
 import time
 from typing import Iterator
 
-from models.sp3d.interface import INF, Block, Corner, Image, Request, Response
-from models.sp3d.logger import get_logger
-from models.sp3d.utils import calc_score_and_corner
-from models.sp3d.visualizer import Visulalizer
+from src.interface import (
+    INF,
+    BinPackingRequest,
+    Block,
+    Corner,
+    Image,
+    Response,
+    StripPackingRequest,
+)
+from src.logger import get_logger
+from src.utils import calc_score_and_corner
+from src.visualizer import Visulalizer
 
 
-class Solver:
+class StripPackingSolver:
     def __init__(
         self,
-        request: Request,
+        request: StripPackingRequest,
         rng: random.Random = random.Random(),
     ) -> None:
+        start = time.time()
         self.request = request
         self.rng = rng
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
@@ -31,6 +40,7 @@ class Solver:
         self.opt_corners: list[Corner] = corners
 
         self.visualizer = Visulalizer(self.request.container_shape)
+        self.logger.info(f"Initialized in {int(100 * (time.time() - start)) / 100} seconds")
 
     def __initialized_order(self) -> list[int]:
         return [
@@ -65,6 +75,7 @@ class Solver:
             # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF),
             # (0, 0, 0), stackable=True),
         ]
+        n_external_blocks = len(blocks)
         corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
             (-3 * INF, -INF, -INF),
@@ -72,8 +83,8 @@ class Solver:
             (-INF, -INF, -3 * INF),
             (container_depth, -INF, -INF),
             (-INF, container_width, -INF),
-            # (-INF, -INF, container_height),
-        ]
+            (-INF, -INF, container_height),
+        ][:n_external_blocks]
         max_score = 0.0
         for order in self.packing_order:
             block = self.blocks[order]
@@ -82,7 +93,7 @@ class Solver:
             blocks.append(block)
             _corners.append(corner)
         for idx, order in enumerate(self.packing_order):
-            corners[order] = _corners[idx + 5]
+            corners[order] = _corners[idx + n_external_blocks]
         return max_score, corners
 
     def __swap(self, temparature: float) -> bool:
@@ -177,3 +188,72 @@ class Solver:
             self.logger.info("keyboard interrupted")
         response = Response(self.blocks, self.opt_corners)
         return response
+
+
+# TOOD: 実装する
+class BinPackingSolver:
+    def __init__(
+        self,
+        request: BinPackingRequest,
+        rng: random.Random = random.Random(),
+    ) -> None:
+        start = time.time()
+        self.request = request
+        self.rng = rng
+        self.logger = get_logger(self.__class__.__name__, sys.stdout)
+        self.blocks = [block.copy() for block in self.request.blocks]
+        self.assignment = self.__initial_assignment()
+
+    def __initial_assignment(self) -> list[list[int]]:
+        assignment = [[] for _ in range(self.request.n_containers)]
+        for block_idx in range(len(self.blocks)):
+            container_idx = block_idx % self.request.n_containers
+            assignment[container_idx].append(block_idx)
+        return assignment
+
+    def __calc_depth_and_corners(self, container_idx: int) -> tuple[float, list[Corner]]:
+        (
+            container_depth,
+            container_width,
+            container_height,
+        ) = self.request.containers[container_idx]
+        blocks = [
+            Block(
+                "wall1", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall2", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall3", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall4", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall5", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+            Block(
+                "wall6", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+            ),
+        ]
+        n_external_blocks = len(blocks)
+        corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
+        _corners: list[Corner] = [
+            (-3 * INF, -INF, -INF),
+            (-INF, -3 * INF, -INF),
+            (-INF, -INF, -3 * INF),
+            (container_depth, -INF, -INF),
+            (-INF, container_width, -INF),
+            (-INF, -INF, container_height),
+        ][:n_external_blocks]
+        max_score = 0.0
+        for order in self.assignment[container_idx]:
+            block = self.blocks[order]
+            score, corner = calc_score_and_corner(block, blocks, _corners)
+            max_score = max(max_score, score)
+            blocks.append(block)
+            _corners.append(corner)
+        for idx, order in enumerate(self.assignment[container_idx]):
+            corners[order] = _corners[idx + n_external_blocks]
+        return max_score, corners
