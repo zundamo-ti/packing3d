@@ -105,7 +105,8 @@ class StripPackingSolver:
         )
         score, corners = self.__calc_depth_and_corners()
         diff = score - self.score
-        transit = math.log(self.rng.random()) * temparature <= -diff
+        rnd = 1e-9 + self.rng.random() * (1 - 1e-9)
+        transit = math.log(rnd) * temparature <= -diff
         if transit:
             # update
             self.corners = corners
@@ -125,7 +126,8 @@ class StripPackingSolver:
         self.blocks[idx].rotate(axis)
         score, corners = self.__calc_depth_and_corners()
         diff = score - self.score
-        transit = math.log(self.rng.random()) * temparature <= -diff
+        rnd = 1e-9 + self.rng.random() * (1 - 1e-9)
+        transit = math.log(rnd) * temparature <= -diff
         if transit:
             # update
             self.corners = corners

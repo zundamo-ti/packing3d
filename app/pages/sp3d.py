@@ -28,7 +28,7 @@ with st.sidebar:
     data_seed = int(st.number_input("Data Seed", value=0))
     container_depth = float(
         st.number_input(
-            "Container Depth", min_value=0.0, value=200.0, step=10.0
+            "Container Depth", min_value=0.0, value=100.0, step=10.0
         )
     )
     container_width = float(
@@ -43,7 +43,7 @@ with st.sidebar:
     )
     container_min = min(container_depth, container_width, container_height)
     n_blocks = int(
-        st.number_input("Number of Blocks", min_value=1, step=1, value=20)
+        st.number_input("Number of Blocks", min_value=1, step=1, value=10)
     )
     n_stackables = int(
         st.number_input(
@@ -51,7 +51,7 @@ with st.sidebar:
             min_value=0,
             max_value=n_blocks,
             step=1,
-            value=5,
+            value=0,
         )
     )
     block_size = int(

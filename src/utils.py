@@ -34,18 +34,15 @@ def calc_events(
 ) -> tuple[list[Event], list[Event], list[Event]]:
     xs = sorted(
         [(box[0], 1, idx) for idx, box in enumerate(nfps)]
-        + [(box[1], -1, idx) for idx, box in enumerate(nfps)],
-        key=lambda t: (t[0], -t[1]),
+        + [(box[1], -1, idx) for idx, box in enumerate(nfps)]
     )
     ys = sorted(
         [(box[2], 1, idx) for idx, box in enumerate(nfps)]
-        + [(box[3], -1, idx) for idx, box in enumerate(nfps)],
-        key=lambda t: (t[0], -t[1]),
+        + [(box[3], -1, idx) for idx, box in enumerate(nfps)]
     )
     zs = sorted(
         [(box[4], 1, idx) for idx, box in enumerate(nfps)]
-        + [(box[5], -1, idx) for idx, box in enumerate(nfps)],
-        key=lambda t: (t[0], -t[1]),
+        + [(box[5], -1, idx) for idx, box in enumerate(nfps)]
     )
     return xs, ys, zs
 
