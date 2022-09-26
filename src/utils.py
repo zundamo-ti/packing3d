@@ -6,7 +6,10 @@ import numpy.typing as npt
 from src.error import NoStablePointFound, NoStackablePointFound
 from src.interface import INF, Block, Box, Corner, Shape
 
-Event = tuple[float, int, int]
+Length = float
+Flag = int
+Order = int
+Event = tuple[Length, Flag, Order]
 
 
 def calc_no_fit_poly(
@@ -53,6 +56,7 @@ def calc_stable_index(
     ys: list[Event],
     zs: list[Event],
     stackable: list[bool],
+    new_stackeble: bool,
 ) -> tuple[int, ...]:
     x_idx_flag_to_order = {
         (idx, flag): order for order, (_, flag, idx) in enumerate(xs)
@@ -83,15 +87,36 @@ def calc_stable_index(
         overlaps[front_order, right_order, bottom_order] += 1
         overlaps[front_order, right_order, top_order] -= 1
 
+        if not new_stackeble:
+            for floor_order in range(bottom_order, -1, -1):
+                flag = zs[floor_order][1]
+                if flag == -1:
+                    break
+                unstackable[back_order, left_order, floor_order] += 1
+                unstackable[back_order, right_order, floor_order] -= 1
+                unstackable[front_order, left_order, floor_order] -= 1
+                unstackable[front_order, right_order, floor_order] += 1
+            for ceil_order in range(floor_order, -1, -1):
+                flag = zs[ceil_order][1]
+                if flag == 1:
+                    break
+                unstackable[back_order, left_order, ceil_order] += 1
+                unstackable[back_order, right_order, ceil_order] -= 1
+                unstackable[front_order, left_order, ceil_order] -= 1
+                unstackable[front_order, right_order, ceil_order] += 1
         if not stackable[idx]:
-            unstackable[back_order, left_order, top_order] += 1
-            unstackable[back_order, right_order, top_order] -= 1
-            unstackable[front_order, left_order, top_order] -= 1
-            unstackable[front_order, right_order, top_order] += 1
+            for order in range(top_order, size):
+                flag = zs[order][1]
+                if flag == 1:
+                    break
+                unstackable[back_order, left_order, order] += 1
+                unstackable[back_order, right_order, order] -= 1
+                unstackable[front_order, left_order, order] -= 1
+                unstackable[front_order, right_order, order] += 1
     overlaps = np.cumsum(
         np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0
     )
-    unstackable = np.cumsum(np.cumsum(unstackable, axis=1), axis=0)
+    unstackable = np.cumsum(np.cumsum(unstackable, axis=1), axis=0) > 0
     shifted_back = np.roll(overlaps, shift=1, axis=0)
     shifted_left = np.roll(overlaps, shift=1, axis=1)
     shifted_down = np.roll(overlaps, shift=1, axis=2)
@@ -101,11 +126,11 @@ def calc_stable_index(
         & (shifted_left > 0)
         & (shifted_down > 0)
     )
-    settlable: npt.NDArray[np.int32] = stable & (unstackable == 0)
-    stable_indices: list[tuple[int, ...]] = list(zip(*np.where(settlable)))
-    stable_indices.sort(key=lambda t: (t[2], t[1], t[0]))
-    if len(stable_indices) > 0:
-        return stable_indices[0]
+    settlable: npt.NDArray[np.int32] = stable & ~unstackable
+    settlable_indices: list[tuple[int, ...]] = list(zip(*np.where(settlable)))
+    settlable_indices.sort(key=lambda t: (t[2], t[0], t[1]))
+    if len(settlable_indices) > 0:
+        return settlable_indices[0]
     else:
         if np.sum(stable) > 0:
             raise NoStackablePointFound
@@ -123,7 +148,7 @@ def calc_score_and_corner(
     xs, ys, zs = calc_events(nfps)
     stackable = [block.stackable for block in blocks]
     try:
-        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable)
+        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable, block.stackable)
     except NoStackablePointFound:
         return INF, (INF, INF, INF)
     x_coord = xs[x_idx][0]

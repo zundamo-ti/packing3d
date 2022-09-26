@@ -75,7 +75,7 @@ class StripPackingSolver:
             # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF),
             # (0, 0, 0), stackable=True),
         ]
-        n_external_blocks = len(blocks)
+        n_walls = len(blocks)
         corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
             (-3 * INF, -INF, -INF),
@@ -84,7 +84,7 @@ class StripPackingSolver:
             (container_depth, -INF, -INF),
             (-INF, container_width, -INF),
             (-INF, -INF, container_height),
-        ][:n_external_blocks]
+        ][:n_walls]
         max_score = 0.0
         for order in self.packing_order:
             block = self.blocks[order]
@@ -93,7 +93,7 @@ class StripPackingSolver:
             blocks.append(block)
             _corners.append(corner)
         for idx, order in enumerate(self.packing_order):
-            corners[order] = _corners[idx + n_external_blocks]
+            corners[order] = _corners[idx + n_walls]
         return max_score, corners
 
     def __swap(self, temparature: float) -> bool:
@@ -239,7 +239,7 @@ class BinPackingSolver:
                 "wall6", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
             ),
         ]
-        n_external_blocks = len(blocks)
+        n_walls = len(blocks)
         corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
             (-3 * INF, -INF, -INF),
@@ -248,7 +248,7 @@ class BinPackingSolver:
             (container_depth, -INF, -INF),
             (-INF, container_width, -INF),
             (-INF, -INF, container_height),
-        ][:n_external_blocks]
+        ][:n_walls]
         max_score = 0.0
         for order in self.assignment[container_idx]:
             block = self.blocks[order]
@@ -257,5 +257,5 @@ class BinPackingSolver:
             blocks.append(block)
             _corners.append(corner)
         for idx, order in enumerate(self.assignment[container_idx]):
-            corners[order] = _corners[idx + n_external_blocks]
+            corners[order] = _corners[idx + n_walls]
         return max_score, corners

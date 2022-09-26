@@ -7,12 +7,12 @@ from src.solver import StripPackingSolver
 
 
 def random_shape(block_size: int, rng: random.Random) -> Shape:
-    min_size = block_size // 2
-    max_size = 3 * block_size // 2
+    min_size = block_size // 20
+    max_size = 3 * block_size // 20
     return (
-        rng.randint(min_size, max_size),
-        rng.randint(min_size, max_size),
-        rng.randint(min_size, max_size),
+        10 * rng.randint(min_size, max_size),
+        10 * rng.randint(min_size, max_size),
+        10 * rng.randint(min_size, max_size),
     )
 
 
@@ -99,6 +99,11 @@ if "image" not in st.session_state or reset:
         )
         for i in range(n_stackables)
     ]
+    # blocks = [
+    #     Block("1", (100, 50, 50), random_color(data_rng)),
+    #     Block("2", (50, 100, 50), random_color(data_rng)),
+    #     Block("3", (50, 50, 50), random_color(data_rng), stackable=False),
+    # ]
     total_volume = sum(block.volume for block in blocks)
     request = StripPackingRequest(blocks, container_shape)
     solver = StripPackingSolver(request)
