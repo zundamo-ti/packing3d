@@ -14,7 +14,7 @@ from src.interface import (
     StripPackingRequest,
 )
 from src.logger import get_logger
-from src.utils import calc_score_and_corner
+from src.utils import calc_top_height_and_corner
 from src.visualizer import Visulalizer
 
 
@@ -31,7 +31,7 @@ class StripPackingSolver:
         self.blocks = [block.copy() for block in self.request.blocks]
         self.packing_order = self.__initialized_order()
 
-        score, corners = self.__calc_depth_and_corners()
+        score, corners = self.__calc_score_and_corners()
         self.score: float = score
         self.corners: list[Corner] = corners
 
@@ -50,7 +50,7 @@ class StripPackingSolver:
             )
         ]
 
-    def __calc_depth_and_corners(self) -> tuple[float, list[Corner]]:
+    def __calc_score_and_corners(self) -> tuple[float, list[Corner]]:
         (
             container_depth,
             container_width,
@@ -85,16 +85,21 @@ class StripPackingSolver:
             (-INF, container_width, -INF),
             (-INF, -INF, container_height),
         ][:n_walls]
-        max_score = 0.0
+        max_height = 0.0
+        n_unstacked = 0
         for order in self.packing_order:
             block = self.blocks[order]
-            score, corner = calc_score_and_corner(block, blocks, _corners)
-            max_score = max(max_score, score)
+            top_height, corner = calc_top_height_and_corner(block, blocks, _corners)
+            if top_height >= INF:
+                n_unstacked += 1
+            else:
+                max_height = max(max_height, top_height)
             blocks.append(block)
             _corners.append(corner)
         for idx, order in enumerate(self.packing_order):
             corners[order] = _corners[idx + n_walls]
-        return max_score, corners
+        score = max_height + n_unstacked * INF
+        return score, corners
 
     def __swap(self, temparature: float) -> bool:
         idx1, idx2 = self.rng.choices(range(self.request.n_blocks), k=2)
@@ -103,7 +108,7 @@ class StripPackingSolver:
             self.packing_order[idx2],
             self.packing_order[idx1],
         )
-        score, corners = self.__calc_depth_and_corners()
+        score, corners = self.__calc_score_and_corners()
         diff = score - self.score
         rnd = 1e-9 + self.rng.random() * (1 - 1e-9)
         transit = math.log(rnd) * temparature <= -diff
@@ -124,7 +129,7 @@ class StripPackingSolver:
         axis = self.blocks[idx].choice_rotate_axis(self.rng)
         # rotate
         self.blocks[idx].rotate(axis)
-        score, corners = self.__calc_depth_and_corners()
+        score, corners = self.__calc_score_and_corners()
         diff = score - self.score
         rnd = 1e-9 + self.rng.random() * (1 - 1e-9)
         transit = math.log(rnd) * temparature <= -diff
@@ -213,7 +218,7 @@ class BinPackingSolver:
             assignment[container_idx].append(block_idx)
         return assignment
 
-    def __calc_depth_and_corners(self, container_idx: int) -> tuple[float, list[Corner]]:
+    def __calc_score_and_corners(self, container_idx: int) -> tuple[float, list[Corner]]:
         (
             container_depth,
             container_width,
@@ -249,13 +254,13 @@ class BinPackingSolver:
             (-INF, container_width, -INF),
             (-INF, -INF, container_height),
         ][:n_walls]
-        max_score = 0.0
+        max_height = 0.0
         for order in self.assignment[container_idx]:
             block = self.blocks[order]
-            score, corner = calc_score_and_corner(block, blocks, _corners)
-            max_score = max(max_score, score)
+            score, corner = calc_top_height_and_corner(block, blocks, _corners)
+            max_height = max(max_height, score)
             blocks.append(block)
             _corners.append(corner)
         for idx, order in enumerate(self.assignment[container_idx]):
             corners[order] = _corners[idx + n_walls]
-        return max_score, corners
+        return max_height, corners

@@ -56,6 +56,7 @@ def calc_stable_index(
     ys: list[Event],
     zs: list[Event],
     stackable: list[bool],
+    new_block_is_stackable: bool,
 ) -> tuple[int, ...]:
     x_idx_flag_to_order = {
         (idx, flag): order for order, (_, flag, idx) in enumerate(xs)
@@ -74,11 +75,13 @@ def calc_stable_index(
         front_order = x_idx_flag_to_order[idx, -1]
         left_order = y_idx_flag_to_order[idx, 1]
         right_order = y_idx_flag_to_order[idx, -1]
-        if stackable[idx]:
+        if new_block_is_stackable:
             bottom_order = z_idx_flag_to_order[idx, 1]
-            top_order = z_idx_flag_to_order[idx, -1]
         else:
             bottom_order = 0
+        if stackable[idx]:
+            top_order = z_idx_flag_to_order[idx, -1]
+        else:
             top_order = size - 1
 
         overlaps[back_order, left_order, bottom_order] += 1
@@ -114,7 +117,7 @@ def calc_stable_index(
             raise NoStablePointFound
 
 
-def calc_score_and_corner(
+def calc_top_height_and_corner(
     block: Block, blocks: list[Block], corners: list[Corner]
 ) -> tuple[float, Corner]:
     new_shape = block.shape
@@ -124,7 +127,7 @@ def calc_score_and_corner(
     xs, ys, zs = calc_events(nfps)
     stackable = [block.stackable for block in blocks]
     try:
-        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable)
+        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable, block.stackable)
     except NoStackablePointFound:
         return INF, (INF, INF, INF)
     except NoStablePointFound:
@@ -132,5 +135,5 @@ def calc_score_and_corner(
     x_coord = xs[x_idx][0]
     y_coord = ys[y_idx][0]
     z_coord = zs[z_idx][0]
-    score = z_coord + new_shape[2]
-    return score, (x_coord, y_coord, z_coord)
+    top_height = z_coord + new_shape[2]
+    return top_height, (x_coord, y_coord, z_coord)

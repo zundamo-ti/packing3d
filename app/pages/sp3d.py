@@ -43,7 +43,7 @@ with st.sidebar:
     )
     container_min = min(container_depth, container_width, container_height)
     n_blocks = int(
-        st.number_input("Number of Blocks", min_value=1, step=1, value=10)
+        st.number_input("Number of Blocks", min_value=1, step=1, value=20)
     )
     n_stackables = int(
         st.number_input(
@@ -51,7 +51,7 @@ with st.sidebar:
             min_value=0,
             max_value=n_blocks,
             step=1,
-            value=0,
+            value=7,
         )
     )
     block_size = int(
@@ -99,11 +99,11 @@ if "image" not in st.session_state or reset:
         )
         for i in range(n_stackables)
     ]
-    # blocks = [
-    #     Block("1", (100, 50, 50), random_color(data_rng)),
-    #     Block("2", (50, 100, 50), random_color(data_rng)),
-    #     Block("3", (50, 50, 50), random_color(data_rng), stackable=False),
-    # ]
+    blocks = [
+        Block("block1", (100, 50, 100), (0, 0, 0), stackable=True),
+        Block("block2", (100, 100, 50), (0, 0, 0), stackable=True),
+        Block("block3", (100, 50, 50), (0, 0, 0), stackable=False),
+    ]
     total_volume = sum(block.volume for block in blocks)
     request = StripPackingRequest(blocks, container_shape)
     solver = StripPackingSolver(request)
