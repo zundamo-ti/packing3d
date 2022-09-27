@@ -28,7 +28,7 @@ with st.sidebar:
     data_seed = int(st.number_input("Data Seed", value=0))
     container_depth = float(
         st.number_input(
-            "Container Depth", min_value=0.0, value=100.0, step=10.0
+            "Container Depth", min_value=0.0, value=200.0, step=10.0
         )
     )
     container_width = float(
@@ -98,11 +98,6 @@ if "image" not in st.session_state or reset:
             stackable=False,
         )
         for i in range(n_stackables)
-    ]
-    blocks = [
-        Block("block1", (100, 50, 100), (0, 0, 0), stackable=True),
-        Block("block2", (100, 100, 50), (0, 0, 0), stackable=True),
-        Block("block3", (100, 50, 50), (0, 0, 0), stackable=False),
     ]
     total_volume = sum(block.volume for block in blocks)
     request = StripPackingRequest(blocks, container_shape)
