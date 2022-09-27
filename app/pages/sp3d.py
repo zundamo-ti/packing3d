@@ -2,8 +2,14 @@ import random
 
 import streamlit as st
 
-from src.interface import Block, Color, Image, Shape, StripPackingRequest
+from src.interface import INF, Block, Color, Image, Shape, StripPackingRequest
 from src.solver import StripPackingSolver
+
+
+def score_to_info(score: float) -> tuple[float, int]:
+    n_unstacked = int(score // INF)
+    top_height = score % INF
+    return top_height, n_unstacked
 
 
 def random_shape(block_size: int, rng: random.Random) -> Shape:
@@ -78,7 +84,8 @@ col1, col2, col3 = st.columns(3)
 reset = col1.button("Reset")
 calculate = col2.button("Calculate")
 pf_holder = st.empty()
-score_holder = st.empty()
+top_height_holder = st.empty()
+n_unstacked_holder = st.empty()
 image_holder = st.empty()
 if "image" not in st.session_state or reset:
     data_rng = random.Random(data_seed)
@@ -103,13 +110,18 @@ if "image" not in st.session_state or reset:
     request = StripPackingRequest(blocks, container_shape)
     solver = StripPackingSolver(request)
     st.session_state["solver"] = solver
-    st.session_state["score"] = solver.opt_score
+    top_height, n_unstacked = score_to_info(solver.opt_score)
+    st.session_state["top_height"] = f"Top Height: {top_height}"
+    st.session_state[
+        "n_unstacked"
+    ] = f"Number of Unstacked Blocks: {n_unstacked}"
     st.session_state["image"] = solver.render(size, padding)
     st.session_state["packing_factor"] = total_volume / container_volume
 
 packing_factor: float = st.session_state["packing_factor"]
 pf_holder.write(f"packing factor = {int(1000 * packing_factor) / 10} %")
-score_holder.write(f"optimal score = {st.session_state['score']}")
+top_height_holder.write(st.session_state["top_height"])
+n_unstacked_holder.write(st.session_state["n_unstacked"])
 image_holder.image(st.session_state["image"])
 use_solver: StripPackingSolver = st.session_state["solver"]
 im: Image = st.session_state["image"]
@@ -118,9 +130,14 @@ if calculate:
     for score, image in use_solver.loop_render(
         max_iter, allow_rotate, temparature, size, padding
     ):
-        score_holder.write(f"optimal score = {score}")
+        top_height, n_unstacked = score_to_info(score)
+        st.session_state["top_height"] = f"Top Height: {top_height}"
+        st.session_state[
+            "n_unstacked"
+        ] = f"Number of Unstacked Blocks: {n_unstacked}"
+        top_height_holder.write(st.session_state["top_height"])
+        n_unstacked_holder.write(st.session_state["n_unstacked"])
         image_holder.image(image)
-        st.session_state["score"] = score
         st.session_state["image"] = image
         if stop:
             break
