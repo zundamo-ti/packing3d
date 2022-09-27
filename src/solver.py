@@ -46,7 +46,7 @@ class StripPackingSolver:
         return [
             idx
             for idx, _ in sorted(
-                enumerate(self.blocks), key=lambda t: t[1].volume, reverse=True
+                enumerate(self.blocks), key=lambda t: (t[1].stackable, t[1].volume), reverse=True
             )
         ]
 

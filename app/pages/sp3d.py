@@ -7,12 +7,12 @@ from src.solver import StripPackingSolver
 
 
 def random_shape(block_size: int, rng: random.Random) -> Shape:
-    min_size = block_size // 20
-    max_size = 3 * block_size // 20
+    min_size = block_size // 2
+    max_size = 3 * block_size // 2
     return (
-        10 * rng.randint(min_size, max_size),
-        10 * rng.randint(min_size, max_size),
-        10 * rng.randint(min_size, max_size),
+        rng.randint(min_size, max_size),
+        rng.randint(min_size, max_size),
+        rng.randint(min_size, max_size),
     )
 
 

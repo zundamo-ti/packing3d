@@ -4,7 +4,7 @@ from typing import Literal
 import cv2
 import numpy as np
 
-from src.interface import Block, Color, Corner, Image, Shape
+from src.interface import INF, Block, Color, Corner, Image, Shape
 
 
 class Visulalizer:
@@ -188,7 +188,9 @@ class Visulalizer:
             return t[1]
 
         for block, corner in sorted(zip(blocks, corners), key=key):
-            image = self.draw_box(image, corner, block, size, padding)
+            bottom = corner[2]
+            if bottom < INF:
+                image = self.draw_box(image, corner, block, size, padding)
         image = self.draw_container(
             image,
             (0.0, 0.0, 0.0),
