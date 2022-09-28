@@ -1,18 +1,13 @@
+import copy
 import math
 import random
 import sys
 import time
-from typing import Iterator
+from typing import Iterator, TextIO
 
-from src.interface import (
-    INF,
-    BinPackingRequest,
-    Block,
-    Corner,
-    Image,
-    Response,
-    StripPackingRequest,
-)
+import numpy as np
+
+from src.interface import INF, Block, Corner, Image, Request, StripPackingResponse
 from src.logger import get_logger
 from src.utils import calc_top_height_and_corner
 from src.visualizer import Visulalizer
@@ -21,7 +16,7 @@ from src.visualizer import Visulalizer
 class StripPackingSolver:
     def __init__(
         self,
-        request: StripPackingRequest,
+        request: Request,
         rng: random.Random = random.Random(),
     ) -> None:
         start = time.time()
@@ -176,7 +171,7 @@ class StripPackingSolver:
         max_iter: int,
         allow_rotate: bool,
         temparature: float,
-    ) -> Response:
+    ) -> StripPackingResponse:
         try:
             self.logger.info("start solving ...")
             start = time.time()
@@ -193,37 +188,46 @@ class StripPackingSolver:
             self.logger.info("finish solving !")
         except KeyboardInterrupt:
             self.logger.info("keyboard interrupted")
-        response = Response(self.blocks, self.opt_corners)
+        response = StripPackingResponse(self.blocks, self.opt_corners)
         return response
 
+StartAndEndIndex = tuple[int, int]
 
-# TOOD: 実装する
+
 class BinPackingSolver:
     def __init__(
         self,
-        request: BinPackingRequest,
-        rng: random.Random = random.Random(),
+        request: Request,
+        rng: random.Random = random.Random()
     ) -> None:
         start = time.time()
         self.request = request
         self.rng = rng
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
         self.blocks = [block.copy() for block in self.request.blocks]
-        self.assignment = self.__initial_assignment()
+        self.packing_order = self.__initialized_order()
 
-    def __initial_assignment(self) -> list[list[int]]:
-        assignment = [[] for _ in range(self.request.n_containers)]
-        for block_idx in range(len(self.blocks)):
-            container_idx = block_idx % self.request.n_containers
-            assignment[container_idx].append(block_idx)
-        return assignment
+        score, corners = self.__calc_score_and_corners()
+        self.score: float = score
+        self.corners: list[tuple[int, list[Corner]]] = corners
 
-    def __calc_score_and_corners(self, container_idx: int) -> tuple[float, list[Corner]]:
+        self.opt_score: float = score
+        self.opt_blocks: list[Block] = [block.copy() for block in self.blocks]
+        self.opt_corners: list[tuple[int, list[Corner]]] = corners
+        self.opt_packing_order = self.packing_order.copy()
+
+        self.visualizer = Visulalizer(self.request.container_shape)
+        self.logger.info(f"Initialized in {(time.time() - start):.2f} seconds")
+
+    def __initialized_order(self) -> list[int]:
+        return list(range(self.request.n_blocks))
+
+    def __calc_top_height_and_corners_and_last_idx(self, start_idx: int) -> tuple[float, list[Corner], int]:
         (
             container_depth,
             container_width,
             container_height,
-        ) = self.request.containers[container_idx]
+        ) = self.request.container_shape
         blocks = [
             Block(
                 "wall1", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
@@ -245,7 +249,6 @@ class BinPackingSolver:
             ),
         ]
         n_walls = len(blocks)
-        corners: list[Corner] = [(0.0, 0.0, 0.0)] * len(self.blocks)
         _corners: list[Corner] = [
             (-3 * INF, -INF, -INF),
             (-INF, -3 * INF, -INF),
@@ -255,12 +258,120 @@ class BinPackingSolver:
             (-INF, -INF, container_height),
         ][:n_walls]
         max_height = 0.0
-        for order in self.assignment[container_idx]:
+        for idx in range(start_idx, self.request.n_blocks):
+            end_idx = idx
+            order = self.packing_order[idx]
             block = self.blocks[order]
-            score, corner = calc_top_height_and_corner(block, blocks, _corners)
-            max_height = max(max_height, score)
+            top_height, corner = calc_top_height_and_corner(block, blocks, _corners, n_walls - 1)
+            if top_height >= INF:
+                end_idx -= 1
+                break
+            else:
+                max_height = max(max_height, top_height)
             blocks.append(block)
             _corners.append(corner)
-        for idx, order in enumerate(self.assignment[container_idx]):
-            corners[order] = _corners[idx + n_walls]
-        return max_height, corners
+        corners: list[Corner] = [(0.0, 0.0, 0.0)] * (end_idx - start_idx + 1)
+        for idx in range(end_idx - start_idx + 1):
+            corners[idx] = _corners[idx + n_walls]
+        return max_height, corners, end_idx
+
+    def __calc_score_and_corners(self) -> tuple[float, list[tuple[StartAndEndIndex, list[Corner]]]]:
+        start_idx = 0
+        n_containers = 0
+        n_blocks_in_last_container = 0
+        all_corners: list[tuple[int, list[Corner]]] = []
+        for container_idx in range(self.request.n_blocks):
+            if start_idx == self.request.n_blocks:
+                break
+            (
+                top_height, corners, end_idx
+            ) = self.__calc_top_height_and_corners_and_last_idx(start_idx)
+            n_blocks_in_last_container = len(corners)
+            n_containers += 1
+            all_corners.append(((start_idx, end_idx), corners))
+            if start_idx == end_idx:
+                break
+            start_idx = end_idx + 1
+        score = n_blocks_in_last_container + n_containers * INF
+        return score, all_corners
+
+    def __swap(self, temparature: float) -> bool:
+        idx1, idx2 = self.rng.choices(range(self.request.n_blocks), k=2)
+        # swap
+        self.packing_order[idx1], self.packing_order[idx2] = (
+            self.packing_order[idx2],
+            self.packing_order[idx1],
+        )
+        score, corners = self.__calc_score_and_corners()
+        diff = score - self.score
+        rnd = 1e-9 + self.rng.random() * (1 - 1e-9)
+        transit = math.log(rnd) * temparature <= -diff
+        if transit:
+            # update
+            self.corners = corners
+            self.score = score
+        else:
+            # rollback
+            self.packing_order[idx1], self.packing_order[idx2] = (
+                self.packing_order[idx2],
+                self.packing_order[idx1],
+            )
+        return transit
+
+    def __rotate(self, temparature: float) -> bool:
+        idx = self.rng.choice(range(self.request.n_blocks))
+        axis = self.blocks[idx].choice_rotate_axis(self.rng)
+        # rotate
+        self.blocks[idx].rotate(axis)
+        score, corners = self.__calc_score_and_corners()
+        diff = score - self.score
+        rnd = 1e-9 + self.rng.random() * (1 - 1e-9)
+        transit = math.log(rnd) * temparature <= -diff
+        if transit:
+            # update
+            self.corners = corners
+            self.score = score
+        else:
+            # rollback
+            self.blocks[idx].rotate(axis)
+        return transit
+
+    def transit(self, allow_rotate: bool, temparature: float) -> bool:
+        if self.rng.random() < 0.5 or not allow_rotate:
+            transit = self.__swap(temparature)
+        else:
+            transit = self.__rotate(temparature)
+        if transit and self.score <= self.opt_score:
+            self.opt_score = self.score
+            self.opt_blocks = [block.copy() for block in self.blocks]
+            self.opt_packing_order = self.packing_order.copy()
+            self.opt_corners = copy.deepcopy(self.corners)
+        return transit
+
+    def loop_render(
+        self,
+        max_iter: int,
+        allow_rotate: bool,
+        temparature: float,
+        size: int,
+        padding: int,
+    ) -> Iterator[tuple[float, Image]]:
+        for n_iter in range(1, max_iter + 1):
+            if n_iter % 10 == 0:
+                yield self.opt_score, self.render(size, padding)
+            self.transit(allow_rotate, temparature)
+
+    def render(self, size: int, padding: int) -> Image:
+        images: list[Image] = []
+        for (start_idx, end_idx), corners in self.opt_corners:
+            blocks = [
+                self.opt_blocks[self.opt_packing_order[idx]] for idx in range(start_idx, end_idx + 1)
+            ]
+            images.append(self.visualizer.render(blocks, corners, size, padding))
+        if len(images) == 0:
+            raise
+        elif len(images) == 1:
+            image = images[0]
+        else:
+            image = np.concatenate(images, axis=0)
+        return image

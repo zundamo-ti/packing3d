@@ -2,7 +2,7 @@ import random
 
 import streamlit as st
 
-from src.interface import Block, Color, Image, Shape, StripPackingRequest
+from src.interface import Block, Color, Image, Request, Shape
 from src.solver import StripPackingSolver
 
 
@@ -51,7 +51,7 @@ with st.sidebar:
             min_value=0,
             max_value=n_blocks,
             step=1,
-            value=7,
+            value=0,
         )
     )
     block_size = int(
@@ -100,7 +100,7 @@ if "image" not in st.session_state or reset:
         for i in range(n_stackables)
     ]
     total_volume = sum(block.volume for block in blocks)
-    request = StripPackingRequest(blocks, container_shape)
+    request = Request(blocks, container_shape)
     solver = StripPackingSolver(request)
     st.session_state["solver"] = solver
     st.session_state["score"] = solver.opt_score

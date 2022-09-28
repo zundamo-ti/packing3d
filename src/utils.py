@@ -12,7 +12,7 @@ Order = int
 Event = tuple[Length, Flag, Order]
 
 
-def calc_no_fit_poly(
+def __calc_no_fit_poly(
     new_shape: Shape, shapes: list[Shape], corners: list[Corner]
 ) -> list[Box]:
     nfps: list[Box] = []
@@ -32,7 +32,7 @@ def calc_no_fit_poly(
     return nfps
 
 
-def calc_events(
+def __calc_events(
     nfps: list[Box],
 ) -> tuple[list[Event], list[Event], list[Event]]:
     xs = sorted(
@@ -50,13 +50,14 @@ def calc_events(
     return xs, ys, zs
 
 
-def calc_stable_index(
+def __calc_stable_index(
     n_boxes: int,
     xs: list[Event],
     ys: list[Event],
     zs: list[Event],
     stackable: list[bool],
     new_block_is_stackable: bool,
+    ceil_idx: Optional[int],
 ) -> tuple[int, ...]:
     x_idx_flag_to_order = {
         (idx, flag): order for order, (_, flag, idx) in enumerate(xs)
@@ -75,7 +76,7 @@ def calc_stable_index(
         front_order = x_idx_flag_to_order[idx, -1]
         left_order = y_idx_flag_to_order[idx, 1]
         right_order = y_idx_flag_to_order[idx, -1]
-        if new_block_is_stackable:
+        if new_block_is_stackable or idx == ceil_idx:
             bottom_order = z_idx_flag_to_order[idx, 1]
         else:
             bottom_order = 0
@@ -118,16 +119,18 @@ def calc_stable_index(
 
 
 def calc_top_height_and_corner(
-    block: Block, blocks: list[Block], corners: list[Corner]
+    block: Block, blocks: list[Block], corners: list[Corner], ceil_idx: Optional[int] = None
 ) -> tuple[float, Corner]:
     new_shape = block.shape
     shapes = [block.shape for block in blocks]
-    nfps = calc_no_fit_poly(new_shape, shapes, corners)
+    nfps = __calc_no_fit_poly(new_shape, shapes, corners)
     n_boxes = len(nfps)
-    xs, ys, zs = calc_events(nfps)
+    xs, ys, zs = __calc_events(nfps)
     stackable = [block.stackable for block in blocks]
     try:
-        x_idx, y_idx, z_idx = calc_stable_index(n_boxes, xs, ys, zs, stackable, block.stackable)
+        x_idx, y_idx, z_idx = __calc_stable_index(
+            n_boxes, xs, ys, zs, stackable, block.stackable, ceil_idx
+        )
     except NoStackablePointFound:
         return INF, (INF, INF, INF)
     except NoStablePointFound:

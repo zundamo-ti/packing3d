@@ -64,27 +64,15 @@ class Block:
 @dataclass
 class Request:
     blocks: list[Block]
+    container_shape: Shape
 
     @property
     def n_blocks(self) -> int:
         return len(self.blocks)
 
 
-@dataclass
-class StripPackingRequest(Request):
-    container_shape: Shape
-
 
 @dataclass
-class BinPackingRequest(Request):
-    containers: list[Shape]
-
-    @property
-    def n_containers(self) -> int:
-        return len(self.containers)
-
-
-@dataclass
-class Response:
+class StripPackingResponse:
     blocks: list[Block]
     corners: list[Corner]
