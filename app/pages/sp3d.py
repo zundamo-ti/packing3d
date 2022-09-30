@@ -60,7 +60,7 @@ with st.sidebar:
             min_value=20,
             max_value=int(container_min),
             value=40,
-            step=10,
+            step=2,
         )
     )
     allow_rotate = st.checkbox("Allow Rotate", True)

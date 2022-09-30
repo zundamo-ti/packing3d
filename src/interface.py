@@ -70,6 +70,15 @@ class Request:
     def n_blocks(self) -> int:
         return len(self.blocks)
 
+    @property
+    def container_volume(self) -> float:
+        (
+            container_width,
+            container_depth,
+            container_height,
+        ) = self.container_shape
+        return container_width * container_depth * container_height
+
 
 
 @dataclass

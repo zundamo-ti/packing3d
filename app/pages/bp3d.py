@@ -51,7 +51,7 @@ with st.sidebar:
             min_value=0,
             max_value=n_blocks,
             step=1,
-            value=0,
+            value=n_blocks // 2,
         )
     )
     block_size = int(
@@ -63,7 +63,7 @@ with st.sidebar:
             step=10,
         )
     )
-    allow_rotate = st.checkbox("Allow Rotate", False)
+    allow_rotate = st.checkbox("Allow Rotate", True)
     max_iter = int(st.number_input("Max Iteration", min_value=1, value=10000))
     temparature = float(
         st.number_input("Temparature", min_value=0.0, value=0.0, step=1.0)
