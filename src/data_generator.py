@@ -41,7 +41,7 @@ def generate_request(
         for i in range(n_stackables)
     ] + [
         Block(
-            f"block{i}",
+            f"block{i + n_stackables}",
             random_shape(block_size, data_rng),
             random_color(data_rng),
             stackable=False,
