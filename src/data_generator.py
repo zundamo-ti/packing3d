@@ -67,10 +67,10 @@ if __name__ == "__main__":
     n_stackables: int = args.stackable_blocks
     n_unstackables: int = args.unstackable_blocks
     container_shape: tuple[int, int, int] = args.container_shape
-    seed: Optional[int] = args.random_seed
+    seed: int = args.random_seed if args.random_seed is not None else random.randint(0, 1e9)
     request = generate_request(
         block_size, n_stackables, n_unstackables, container_shape, seed
     )
     DATADIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    path = DATADIR / Path(f"data/request_{seed}.xlsx")
+    path = DATADIR / Path(f"data/request_{block_size=}_{n_stackables=}_{n_unstackables=}_{container_shape=}_{seed=}.xlsx")
     request_to_excel(request, path)
