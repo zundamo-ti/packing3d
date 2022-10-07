@@ -7,6 +7,8 @@ name = "pypi"
 numpy = "*"
 opencv-python = "*"
 streamlit = "*"
+openpyxl = "*"
+xlwt = "*"
 
 [dev-packages]
 mypy = "*"
