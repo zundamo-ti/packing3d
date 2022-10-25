@@ -37,7 +37,9 @@ if reset and file is not None:
     st.session_state["image"] = solver.render(size, padding)
 
 try:
-    num_unpacked, top_height = score_to_num_unpacked_and_top_height(st.session_state["score"])
+    num_unpacked, top_height = score_to_num_unpacked_and_top_height(
+        st.session_state["score"]
+    )
     num_unpacked_holder.write(f"Number of Unpacked Blocks = {num_unpacked}")
     top_height_holder.write(f"Top Height = {top_height}")
     image_holder.image(st.session_state["image"])
@@ -48,8 +50,12 @@ try:
         for score, image in use_solver.loop_render(
             max_iter, allow_rotate, temparature, size, padding
         ):
-            num_unpacked, top_height = score_to_num_unpacked_and_top_height(st.session_state["score"])
-            num_unpacked_holder.write(f"Number of Unpacked Blocks = {num_unpacked}")
+            num_unpacked, top_height = score_to_num_unpacked_and_top_height(
+                st.session_state["score"]
+            )
+            num_unpacked_holder.write(
+                f"Number of Unpacked Blocks = {num_unpacked}"
+            )
             top_height_holder.write(f"Top Height = {top_height}")
             image_holder.image(image)
             st.session_state["score"] = score

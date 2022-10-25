@@ -28,6 +28,11 @@ Color: TypeAlias = tuple[int, int, int]
 INF = 1e9
 
 
+def volume(shape: Shape) -> float:
+    depth, width, height = shape
+    return depth * width * height
+
+
 @dataclass
 class Block:
     name: str
@@ -64,21 +69,33 @@ class Block:
 @dataclass
 class Request:
     blocks: list[Block]
-    container_shape: Shape
 
     @property
     def n_blocks(self) -> int:
         return len(self.blocks)
 
+
+@dataclass
+class StripPackingRequest(Request):
+    container_shape: Shape
+
     @property
     def container_volume(self) -> float:
-        (
-            container_width,
-            container_depth,
-            container_height,
-        ) = self.container_shape
-        return container_width * container_depth * container_height
+        return volume(self.container_shape)
 
+
+@dataclass
+class BinPackingRequest(Request):
+    container_shapes: list[Shape]
+
+    def __post_init__(self) -> None:
+        self.container_volumes = [
+            volume(shape) for shape in self.container_shapes
+        ]
+
+    @property
+    def n_containers(self) -> int:
+        return len(self.container_shapes)
 
 
 @dataclass

@@ -5,7 +5,7 @@ from typing import Any
 
 import pandas as pd
 
-from src.interface import Block, Corner, Request, Shape, StripPackingResponse
+from src.interface import Block, Corner, Request, Shape, StripPackingRequest, StripPackingResponse
 
 # sheet names
 CONTAINER_SHEET = "container"
@@ -56,7 +56,7 @@ def container_to_df(container_shape: Shape) -> pd.DataFrame:
     )
 
 
-def request_to_excel(request: Request, path: Path) -> None:
+def request_to_excel(request: StripPackingRequest, path: Path) -> None:
     Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
     df_blocks = blocks_to_df(request.blocks)
     df_container = container_to_df(request.container_shape)
@@ -86,7 +86,7 @@ def excel_to_request(path: Path) -> Request:
         right_side_up = getattr(row, RIGHT_SIDE_UP)
         block = Block(name, shape, color, stackable, right_side_up)
         blocks.append(block)
-    return Request(blocks, container_shape)
+    return StripPackingRequest(blocks, container_shape)
 
 
 def corners_to_df(corners: list[Corner]) -> pd.DataFrame:
