@@ -44,13 +44,17 @@ class StripPackingSolver:
         self.opt_corners: list[Corner] = corners
 
         self.visualizer = Visulalizer(self.request.container_shape)
-        self.logger.info(f"Initialized in {int(100 * (time.time() - start)) / 100} seconds")
+        self.logger.info(
+            f"Initialized in {int(100 * (time.time() - start)) / 100} seconds"
+        )
 
     def __initialized_order(self) -> list[int]:
         return [
             idx
             for idx, _ in sorted(
-                enumerate(self.blocks), key=lambda t: (t[1].stackable, t[1].volume), reverse=True
+                enumerate(self.blocks),
+                key=lambda t: (t[1].stackable, t[1].volume),
+                reverse=True,
             )
         ]
 
@@ -62,22 +66,42 @@ class StripPackingSolver:
         ) = self.request.container_shape
         blocks = [
             Block(
-                "wall1", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+                "wall1",
+                (3 * INF, 3 * INF, 3 * INF),
+                0.0,
+                (0, 0, 0),
+                stackable=True,
             ),
             Block(
-                "wall2", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+                "wall2",
+                (3 * INF, 3 * INF, 3 * INF),
+                0.0,
+                (0, 0, 0),
+                stackable=True,
             ),
             Block(
-                "wall3", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+                "wall3",
+                (3 * INF, 3 * INF, 3 * INF),
+                0.0,
+                (0, 0, 0),
+                stackable=True,
             ),
             Block(
-                "wall4", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+                "wall4",
+                (3 * INF, 3 * INF, 3 * INF),
+                0.0,
+                (0, 0, 0),
+                stackable=True,
             ),
             Block(
-                "wall5", (3 * INF, 3 * INF, 3 * INF), (0, 0, 0), stackable=True
+                "wall5",
+                (3 * INF, 3 * INF, 3 * INF),
+                0.0,
+                (0, 0, 0),
+                stackable=True,
             ),
             # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF),
-            # (0, 0, 0), stackable=True),
+            # (0, 0, 0), 0.0, stackable=True),
         ]
         n_walls = len(blocks)
         _corners: list[Corner] = [
@@ -92,7 +116,9 @@ class StripPackingSolver:
         n_unstacked = 0
         for order in self.packing_order:
             block = self.blocks[order]
-            top_height, corner = calc_top_height_and_corner(block, blocks, _corners)
+            top_height, corner = calc_top_height_and_corner(
+                block, blocks, _corners
+            )
             if top_height >= INF:
                 n_unstacked += 1
             else:

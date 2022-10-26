@@ -9,6 +9,7 @@ opencv-python = "*"
 streamlit = "*"
 openpyxl = "*"
 xlwt = "*"
+pulp = "*"
 
 [dev-packages]
 mypy = "*"

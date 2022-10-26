@@ -28,6 +28,11 @@ Color: TypeAlias = tuple[int, int, int]
 INF = 1e9
 
 
+def base_area(shape: Shape) -> float:
+    depth, width, _ = shape
+    return depth * width
+
+
 def volume(shape: Shape) -> float:
     depth, width, height = shape
     return depth * width * height
@@ -37,13 +42,14 @@ def volume(shape: Shape) -> float:
 class Block:
     name: str
     shape: Shape
+    weight: float
     color: Color
     stackable: bool = True
     right_side_up: bool = False
 
     def __post_init__(self) -> None:
         if self.right_side_up:
-            self.rotatable_axes = (2,)
+            self.rotatable_axes: tuple[int, ...] = (2,)
         else:
             self.rotatable_axes = (0, 1, 2)
 
@@ -52,7 +58,11 @@ class Block:
 
     @property
     def volume(self) -> float:
-        return self.shape[0] * self.shape[1] * self.shape[2]
+        return volume(self.shape)
+
+    @property
+    def base_area(self) -> float:
+        return base_area(self.shape)
 
     def choice_rotate_axis(self, rng: random.Random) -> int:
         return rng.choice(self.rotatable_axes)
@@ -67,6 +77,21 @@ class Block:
 
 
 @dataclass
+class Container:
+    name: str
+    shape: Shape
+    weight_capacity: float
+
+    @property
+    def volume(self) -> float:
+        return volume(self.shape)
+
+    @property
+    def base_area(self) -> float:
+        return base_area(self.shape)
+
+
+@dataclass
 class Request:
     blocks: list[Block]
 
@@ -77,28 +102,38 @@ class Request:
 
 @dataclass
 class StripPackingRequest(Request):
-    container_shape: Shape
+    container: Container
+
+    @property
+    def container_shape(self) -> Shape:
+        return self.container.shape
 
     @property
     def container_volume(self) -> float:
-        return volume(self.container_shape)
+        return volume(self.container.volume)
 
 
 @dataclass
 class BinPackingRequest(Request):
-    container_shapes: list[Shape]
-
-    def __post_init__(self) -> None:
-        self.container_volumes = [
-            volume(shape) for shape in self.container_shapes
-        ]
+    containers: list[Container]
 
     @property
     def n_containers(self) -> int:
-        return len(self.container_shapes)
+        return len(self.containers)
 
 
 @dataclass
 class StripPackingResponse:
     blocks: list[Block]
     corners: list[Corner]
+
+
+@dataclass
+class BinPackingResponse:
+    container_indexes: list[int]
+    corners: list[Corner]
+
+    def copy(self) -> BinPackingResponse:
+        return BinPackingResponse(
+            self.container_indexes.copy(), self.corners.copy()
+        )

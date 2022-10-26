@@ -28,6 +28,7 @@ calculate = col2.button("Calculate")
 pf_holder = st.empty()
 num_unpacked_holder = st.empty()
 top_height_holder = st.empty()
+weight_holder = st.empty()
 image_holder = st.empty()
 if reset and file is not None:
     request = excel_to_request(file)
@@ -35,6 +36,10 @@ if reset and file is not None:
     st.session_state["solver"] = solver
     st.session_state["score"] = solver.opt_score
     st.session_state["image"] = solver.render(size, padding)
+    st.session_state["weight_capacity"] = request.container.weight_capacity
+    st.session_state["total_weight"] = sum(
+        block.weight for block in request.blocks
+    )
 
 try:
     num_unpacked, top_height = score_to_num_unpacked_and_top_height(
@@ -42,6 +47,12 @@ try:
     )
     num_unpacked_holder.write(f"Number of Unpacked Blocks = {num_unpacked}")
     top_height_holder.write(f"Top Height = {top_height}")
+    total_weight = st.session_state["total_weight"]
+    weight_capacity = st.session_state["weight_capacity"]
+    weight_holder.write(
+        f"Total / Capacity Weight = {total_weight:.2f} / {weight_capacity:.2f}"
+        f" = {total_weight / weight_capacity:.2f}"
+    )
     image_holder.image(st.session_state["image"])
     use_solver: StripPackingSolver = st.session_state["solver"]
     im: Image = st.session_state["image"]

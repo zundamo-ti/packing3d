@@ -70,7 +70,6 @@ def __calc_stable_index(
     }
     size = 2 * n_boxes
     overlaps = np.zeros((size, size, size), np.int32)
-    unstackable = np.zeros((size, size, size), np.int32)
     for idx in range(n_boxes):
         back_order = x_idx_flag_to_order[idx, 1]
         front_order = x_idx_flag_to_order[idx, -1]
@@ -96,7 +95,6 @@ def __calc_stable_index(
     overlaps = np.cumsum(
         np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0
     )
-    unstackable = np.cumsum(np.cumsum(unstackable, axis=1), axis=0) > 0
     shifted_back = np.roll(overlaps, shift=1, axis=0)
     shifted_left = np.roll(overlaps, shift=1, axis=1)
     shifted_down = np.roll(overlaps, shift=1, axis=2)
@@ -106,11 +104,10 @@ def __calc_stable_index(
         & (shifted_left > 0)
         & (shifted_down > 0)
     )
-    settlable: npt.NDArray[np.int32] = stable & ~unstackable
-    settlable_indices: list[tuple[int, ...]] = list(zip(*np.where(settlable)))
-    settlable_indices.sort(key=lambda t: (t[2], t[0], t[1]))
-    if len(settlable_indices) > 0:
-        return settlable_indices[0]
+    stable_indices: list[tuple[int, ...]] = list(zip(*np.where(stable)))
+    stable_indices.sort(key=lambda t: (t[2], t[0], t[1]))
+    if len(stable_indices) > 0:
+        return stable_indices[0]
     else:
         if np.sum(stable) > 0:
             raise NoStackablePointFound
@@ -119,7 +116,10 @@ def __calc_stable_index(
 
 
 def calc_top_height_and_corner(
-    block: Block, blocks: list[Block], corners: list[Corner], ceil_idx: Optional[int] = None
+    block: Block,
+    blocks: list[Block],
+    corners: list[Corner],
+    ceil_idx: Optional[int] = None,
 ) -> tuple[float, Corner]:
     new_shape = block.shape
     shapes = [block.shape for block in blocks]
