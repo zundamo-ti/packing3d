@@ -61,38 +61,44 @@ if reset and file is not None:
     image_holder.image(st.session_state["image"])
 
 
-# try:
-#     num_unpacked, top_height = score_to_num_unpacked_and_top_height(
-#         st.session_state["score"]
-#     )
-#     num_unpacked_holder.write(f"Number of Unpacked Blocks = {num_unpacked}")
-#     top_height_holder.write(f"Top Height = {top_height}")
-#     total_weight = st.session_state["total_weight"]
-#     weight_capacity = st.session_state["weight_capacity"]
-#     weight_holder.write(
-#         f"Total / Capacity Weight = {total_weight:.2f}"
-#         f" / {weight_capacity:.2f}"
-#         f" = {total_weight / weight_capacity:.2f}"
-#     )
-#     image_holder.image(st.session_state["image"])
-#     use_solver: StripPackingSolver = st.session_state["solver"]
-#     im: Image = st.session_state["image"]
-#     if calculate:
-#         stop = col3.button("Stop")
-#         for score, image in use_solver.loop_render(
-#             max_iter, allow_rotate, temparature, size, padding
-#         ):
-#             num_unpacked, top_height = score_to_num_unpacked_and_top_height(
-#                 st.session_state["score"]
-#             )
-#             num_unpacked_holder.write(
-#                 f"Number of Unpacked Blocks = {num_unpacked}"
-#             )
-#             top_height_holder.write(f"Top Height = {top_height}")
-#             image_holder.image(image)
-#             st.session_state["score"] = score
-#             st.session_state["image"] = image
-#             if stop:
-#                 break
-# except KeyError:
-#     pass
+try:
+    n_unpacked_holder.write(
+        f"Number of Unpacked Blokcs: {st.session_state['n_unpacked']}"
+    )
+    n_containers_holder.write(
+        f"Number of Used Containers: {st.session_state['n_containers']}"
+    )
+    top_height_holder.write(f"Top Height: {st.session_state['top_height']}")
+    image_holder.image(st.session_state["image"])
+    use_solver: BinPackingSolver = st.session_state["solver"]
+    if calculate:
+        stop = col3.button("Stop")
+        for score, image in use_solver.loop_render(
+            max_iter, temparature, size, padding
+        ):
+            print(f"{score=}")
+            (
+                n_unpacked,
+                n_containers,
+                top_height,
+            ) = score_to_n_unpacked_and_n_containers_and_top_height(score)
+            st.session_state["n_unpacked"] = n_unpacked
+            st.session_state["n_containers"] = n_containers
+            st.session_state["top_height"] = top_height
+            n_unpacked_holder.write(
+                f"Number of Unpacked Blokcs: {st.session_state['n_unpacked']}"
+            )
+            n_containers_holder.write(
+                f"Number of Used Containers: "
+                f"{st.session_state['n_containers']}"
+            )
+            top_height_holder.write(
+                f"Top Height: {st.session_state['top_height']}"
+            )
+            image_holder.image(image)
+            st.session_state["image"] = image
+            if stop:
+                break
+except KeyError as e:
+    print(e)
+    pass

@@ -150,5 +150,3 @@ if __name__ == "__main__":
     request = generate_bin_packing_request(40, 100, 30, 30, 5, seed)
     path = DATADIR / Path(f"data/bin_packing_request_{seed=}.xlsx")
     request_to_excel(request, path)
-    converted_request = excel_to_bin_packing_request(path)
-    print(converted_request)
