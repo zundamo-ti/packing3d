@@ -130,10 +130,6 @@ class StripPackingResponse:
 
 @dataclass
 class BinPackingResponse:
-    container_indexes: list[int]
+    blocks: list[Block]
     corners: list[Corner]
-
-    def copy(self) -> BinPackingResponse:
-        return BinPackingResponse(
-            self.container_indexes.copy(), self.corners.copy()
-        )
+    container_indexes: list[int]

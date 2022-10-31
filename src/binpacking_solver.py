@@ -26,7 +26,7 @@ from src.interface import (
     Image,
 )
 from src.logger import get_logger
-from src.utils import calc_top_height_and_corner
+from src.utils import calc_container_score_and_corner
 from src.visualizer import Visulalizer
 
 VOLUME_CAPACITY_RATIO = 0.7
@@ -74,6 +74,7 @@ class BinPackingSolver:
         ]
         self.temparature = 0.0
 
+    @property
     def response(self) -> BinPackingResponse:
         container_indexes: list[int] = [-1] * self.request.n_blocks
         corners: list[Corner] = [(INF, INF, INF)] * self.request.n_blocks
@@ -85,7 +86,7 @@ class BinPackingSolver:
             for block_idx, corner in zip(block_idxs, _corners):
                 container_indexes[block_idx] = container_idx
                 corners[block_idx] = corner
-        return BinPackingResponse(container_indexes, corners)
+        return BinPackingResponse(self.blocks, corners, container_indexes)
 
     def initialize(self) -> None:
         self.blocks = [block.copy() for block in self.request.blocks]
@@ -130,20 +131,20 @@ class BinPackingSolver:
             (-INF, container_width, -INF),
             (-INF, -INF, container_height),
         ]
-        max_height = 0.0
+        max_score = 0.0
         n_unstacked = 0
         for idx in block_idxs:
             block = self.blocks[idx]
-            top_height, corner = calc_top_height_and_corner(
+            container_score, corner = calc_container_score_and_corner(
                 block, wall_and_blocks, _corners, N_WALLS - 1
             )
-            if top_height >= INF:
+            if container_score >= INF:
                 n_unstacked += 1
             else:
-                max_height = max(max_height, top_height)
+                max_score = max(max_score, container_score)
             wall_and_blocks.append(block)
             _corners.append(corner)
-        score = max_height + BLOCK_UNSTACKED_PENALTY * n_unstacked
+        score = max_score + BLOCK_UNSTACKED_PENALTY * n_unstacked
         corners = _corners[N_WALLS:]
         return score, corners
 
@@ -262,7 +263,7 @@ class BinPackingSolver:
         return False
 
     def __shift(self, temparature: float) -> bool:
-        container_idx1, container_idx2 = self.rng.choices(
+        container_idx1, container_idx2 = self.rng.sample(
             [
                 idx
                 for idx in range(self.request.n_containers)

@@ -112,41 +112,10 @@ if __name__ == "__main__":
     import os
     from pathlib import Path
 
-    from src.converter import excel_to_bin_packing_request, request_to_excel
+    from src.converter import request_to_excel
 
     DATADIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    # from argparse import ArgumentParser
-    # parser = ArgumentParser()
-    # parser.add_argument("-b", "--block-size", type=int, default=40)
-    # parser.add_argument("-s", "--stackable-blocks", type=int, default=10)
-    # parser.add_argument("-u", "--unstackable-blocks", type=int, default=10)
-    # parser.add_argument(
-    #     "-c", "--container-shape", nargs=3, type=int, default=(200, 100, 100)
-    # )
-    # parser.add_argument("-r", "--random-seed", type=int)
-    # args = parser.parse_args()
-    # block_size: int = args.block_size
-    # n_stackables: int = args.stackable_blocks
-    # n_unstackables: int = args.unstackable_blocks
-    # container_shape: tuple[int, int, int] = args.container_shape
-    # seed: int = (
-    #     args.random_seed
-    #     if args.random_seed is not None
-    #     else random.randint(0, 1_000_000_000)
-    # )
-    # request = generate_strip_packing_request(
-    #     block_size, n_stackables, n_unstackables, container_shape, seed
-    # )
-    # path = DATADIR / Path(
-    #     f"data/request"
-    #     f"_{block_size=}"
-    #     f"_{n_stackables=}"
-    #     f"_{n_unstackables=}"
-    #     f"_{container_shape=}"
-    #     f"_{seed=}.xlsx"
-    # )
-    # request_to_excel(request, path)
     seed: int = random.Random().randint(0, 1_000_000_000)
-    request = generate_bin_packing_request(40, 100, 30, 30, 5, seed)
+    request = generate_bin_packing_request(40, 100, 80, 20, 10, seed)
     path = DATADIR / Path(f"data/bin_packing_request_{seed=}.xlsx")
     request_to_excel(request, path)

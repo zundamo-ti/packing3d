@@ -105,7 +105,7 @@ def __calc_stable_index(
         & (shifted_down > 0)
     )
     stable_indices: list[tuple[int, ...]] = list(zip(*np.where(stable)))
-    stable_indices.sort(key=lambda t: (t[2], t[0], t[1]))
+    stable_indices.sort(key=lambda t: (t[0], t[2], t[1]))
     if len(stable_indices) > 0:
         return stable_indices[0]
     else:
@@ -115,7 +115,7 @@ def __calc_stable_index(
             raise NoStablePointFound
 
 
-def calc_top_height_and_corner(
+def calc_container_score_and_corner(
     block: Block,
     blocks: list[Block],
     corners: list[Corner],
@@ -138,5 +138,5 @@ def calc_top_height_and_corner(
     x_coord = xs[x_idx][0]
     y_coord = ys[y_idx][0]
     z_coord = zs[z_idx][0]
-    top_height = z_coord + new_shape[2]
-    return top_height, (x_coord, y_coord, z_coord)
+    front_depth = x_coord + new_shape[0]
+    return front_depth, (x_coord, y_coord, z_coord)
