@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.binpacking_solver import (
+from src.bin_packing_solver import (
     BLOCK_UNSTACKED_PENALTY,
     CONTAINER_USED_PENALTY,
     BinPackingSolver,
@@ -60,30 +60,20 @@ if reset and file is not None:
         f"Number of Used Containers: {st.session_state['n_containers']}"
     )
     container_score_holder.write(
-        f"Container Score: {st.session_state['container_score']}"
+        f"Container Score: {st.session_state['container_score']:.1f}"
     )
     image_holder.image(st.session_state["image"])
 
 
 try:
-    n_unpacked_holder.write(
-        f"Number of Unpacked Blokcs: {st.session_state['n_unpacked']}"
-    )
-    n_containers_holder.write(
-        f"Number of Used Containers: {st.session_state['n_containers']}"
-    )
-    container_score_holder.write(
-        f"Container Score: {st.session_state['container_score']}"
-    )
     image_holder.image(st.session_state["image"])
     use_solver: BinPackingSolver = st.session_state["solver"]
-    to_json = st.button("Response to JSON string")
+    to_json = col1.button("Response to JSON string")
     if to_json:
         with open("data/response.json", "w") as f:
             json_str = bin_packing_to_json(
                 use_solver.request, use_solver.response, f
             )
-            st.write(json_str)
     if calculate:
         stop = col3.button("Stop")
         for score, image in use_solver.loop_render(
@@ -105,7 +95,7 @@ try:
                 f"{st.session_state['n_containers']}"
             )
             container_score_holder.write(
-                f"Container Score: {st.session_state['container_score']}"
+                f"Container Score: {st.session_state['container_score']:.1f}"
             )
             image_holder.image(image)
             st.session_state["image"] = image

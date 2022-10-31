@@ -25,7 +25,8 @@ CONTAINER_SHEET = "container"
 BLOCK_SHEET = "block"
 RESPONSE_SHEET = "response"
 # column names
-NAME = "name_"
+BLOCK_NAME = "block_name"
+CONTAINER_NAME = "container_name"
 DEPTH = "depth"
 WIDTH = "width"
 HEIGHT = "height"
@@ -42,7 +43,7 @@ RNG = random.Random(0)
 
 def blocks_to_df(blocks: list[Block]) -> pd.DataFrame:
     df_blocks_dict: dict[str, list[Any]] = {
-        NAME: [],
+        BLOCK_NAME: [],
         DEPTH: [],
         WIDTH: [],
         HEIGHT: [],
@@ -52,7 +53,7 @@ def blocks_to_df(blocks: list[Block]) -> pd.DataFrame:
     }
     for block in blocks:
         depth, width, height = block.shape
-        df_blocks_dict[NAME].append(block.name)
+        df_blocks_dict[BLOCK_NAME].append(block.name)
         df_blocks_dict[DEPTH].append(depth)
         df_blocks_dict[WIDTH].append(width)
         df_blocks_dict[HEIGHT].append(height)
@@ -76,7 +77,7 @@ def container_to_df(container: Container) -> pd.DataFrame:
 
 def containers_to_df(containers: list[Container]) -> pd.DataFrame:
     df_containers_dict: dict[str, list[Any]] = {
-        NAME: [],
+        CONTAINER_NAME: [],
         DEPTH: [],
         WIDTH: [],
         HEIGHT: [],
@@ -84,7 +85,7 @@ def containers_to_df(containers: list[Container]) -> pd.DataFrame:
     }
     for container in containers:
         depth, width, height = container.shape
-        df_containers_dict[NAME].append(container.name)
+        df_containers_dict[CONTAINER_NAME].append(container.name)
         df_containers_dict[DEPTH].append(depth)
         df_containers_dict[WIDTH].append(width)
         df_containers_dict[HEIGHT].append(height)
@@ -119,7 +120,7 @@ def excel_to_request(path: Path) -> StripPackingRequest:
     df_blocks = pd.read_excel(path, sheet_name=BLOCK_SHEET)
     blocks: list[Block] = []
     for idx, row in df_blocks.iterrows():
-        name = getattr(row, NAME)
+        name = getattr(row, BLOCK_NAME)
         depth = getattr(row, DEPTH)
         width = getattr(row, WIDTH)
         height = getattr(row, HEIGHT)
@@ -146,7 +147,7 @@ def excel_to_bin_packing_request(path: Path) -> BinPackingRequest:
     df_blocks = pd.read_excel(path, sheet_name=BLOCK_SHEET)
     blocks: list[Block] = []
     for idx, row in df_blocks.iterrows():
-        name = getattr(row, NAME)
+        name = getattr(row, BLOCK_NAME)
         depth = getattr(row, DEPTH)
         width = getattr(row, WIDTH)
         height = getattr(row, HEIGHT)
@@ -161,7 +162,7 @@ def excel_to_bin_packing_request(path: Path) -> BinPackingRequest:
     df_containers = pd.read_excel(path, sheet_name=CONTAINER_SHEET)
     containers: list[Container] = []
     for _, row in df_containers.iterrows():
-        name = getattr(row, NAME)
+        name = getattr(row, CONTAINER_NAME)
         depth = getattr(row, DEPTH)
         width = getattr(row, WIDTH)
         height = getattr(row, HEIGHT)
