@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 79
+line-length = 100
 exclude = '''
 (
    .venv
@@ -16,7 +16,7 @@ ensure_newline_before_comments = true
 line_length = 100
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 follow_imports = "silent"
 ignore_missing_imports = true
 show_column_numbers = true
@@ -41,15 +41,15 @@ strict_equality = true
 module = "tests.*"
 disallow_untyped_defs = false
 
-[tool.pyright]
-typeCheckingMode = "off"
-
 [tool.poe.tasks]
-lint = "flake8 shift_scheduling shelf_allocation tests day_tour_optimization app.py"
+lint = "flake8 src"
+type = "mypy src"
+format = "black src"
 test = "python -m unittest discover -v tests"
 test-coverage = "coverage run --source '.'  -m unittest discover -v tests"
 test-module = "python -m unittest -v"
-type-check = "mypy shift_scheduling shelf_allocation tests day_tour_optimization app.py"
+app = "streamlit run app/app.py"
+data = "python src/data_generator.py"
 
 [tool.coverage.run]
 omit = ["tests/*", ".venv/*"]

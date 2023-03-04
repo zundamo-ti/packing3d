@@ -12,9 +12,7 @@ Order = int
 Event = tuple[Length, Flag, Order]
 
 
-def __calc_no_fit_poly(
-    new_shape: Shape, shapes: list[Shape], corners: list[Corner]
-) -> list[Box]:
+def __calc_no_fit_poly(new_shape: Shape, shapes: list[Shape], corners: list[Corner]) -> list[Box]:
     nfps: list[Box] = []
     new_depth, new_width, new_height = new_shape
     for shape, corner in zip(shapes, corners):
@@ -26,9 +24,7 @@ def __calc_no_fit_poly(
         box_front = back + depth
         box_right = left + width
         box_top = bottom + height
-        nfps.append(
-            (box_back, box_front, box_left, box_right, box_height, box_top)
-        )
+        nfps.append((box_back, box_front, box_left, box_right, box_height, box_top))
     return nfps
 
 
@@ -59,15 +55,9 @@ def __calc_stable_index(
     new_block_is_stackable: bool,
     ceil_idx: Optional[int],
 ) -> tuple[int, ...]:
-    x_idx_flag_to_order = {
-        (idx, flag): order for order, (_, flag, idx) in enumerate(xs)
-    }
-    y_idx_flag_to_order = {
-        (idx, flag): order for order, (_, flag, idx) in enumerate(ys)
-    }
-    z_idx_flag_to_order = {
-        (idx, flag): order for order, (_, flag, idx) in enumerate(zs)
-    }
+    x_idx_flag_to_order = {(idx, flag): order for order, (_, flag, idx) in enumerate(xs)}
+    y_idx_flag_to_order = {(idx, flag): order for order, (_, flag, idx) in enumerate(ys)}
+    z_idx_flag_to_order = {(idx, flag): order for order, (_, flag, idx) in enumerate(zs)}
     size = 2 * n_boxes
     overlaps = np.zeros((size, size, size), np.int32)
     for idx in range(n_boxes):
@@ -92,17 +82,12 @@ def __calc_stable_index(
         overlaps[front_order, left_order, top_order] += 1
         overlaps[front_order, right_order, bottom_order] += 1
         overlaps[front_order, right_order, top_order] -= 1
-    overlaps = np.cumsum(
-        np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0
-    )
+    overlaps = np.cumsum(np.cumsum(np.cumsum(overlaps, axis=2), axis=1), axis=0)
     shifted_back = np.roll(overlaps, shift=1, axis=0)
     shifted_left = np.roll(overlaps, shift=1, axis=1)
     shifted_down = np.roll(overlaps, shift=1, axis=2)
     stable: npt.NDArray[np.int32] = (
-        (overlaps == 0)
-        & (shifted_back > 0)
-        & (shifted_left > 0)
-        & (shifted_down > 0)
+        (overlaps == 0) & (shifted_back > 0) & (shifted_left > 0) & (shifted_down > 0)
     )
     stable_indices: list[tuple[int, ...]] = list(zip(*np.where(stable)))
     stable_indices.sort(key=lambda t: (t[0], t[2], t[1]))

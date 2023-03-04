@@ -18,9 +18,7 @@ class Visulalizer:
             container_height,
         ) = self.container_shape
         self.image_width = cos15 * (container_depth + container_width)
-        self.image_height = container_height + sin15 * (
-            container_depth + container_width
-        )
+        self.image_height = container_height + sin15 * (container_depth + container_width)
         self.image_size = max(self.image_width, self.image_height)
         self.origin_pos = (cos15 * container_width, container_height)
         self.depth_vector = (cos15 * container_depth, sin15 * container_depth)
@@ -33,9 +31,7 @@ class Visulalizer:
     def rescale(self, x: float, size: int, padding: int) -> int:
         return int(size * x / self.image_size) + padding
 
-    def corner_to_pos(
-        self, corner: Corner, size: int, padding: int
-    ) -> tuple[int, int]:
+    def corner_to_pos(self, corner: Corner, size: int, padding: int) -> tuple[int, int]:
         back, left, bottom = corner
         ox, oy = self.origin_pos
         vdx, vdy = self.depth_vector
@@ -70,18 +66,10 @@ class Visulalizer:
         d = self.corner_to_pos((back + depth, left, bottom), size, padding)
         w = self.corner_to_pos((back, left + width, bottom), size, padding)
         h = self.corner_to_pos((back, left, bottom + height), size, padding)
-        wh = self.corner_to_pos(
-            (back, left + width, bottom + height), size, padding
-        )
-        dh = self.corner_to_pos(
-            (back + depth, left, bottom + height), size, padding
-        )
-        dw = self.corner_to_pos(
-            (back + depth, left + width, bottom), size, padding
-        )
-        dwh = self.corner_to_pos(
-            (back + depth, left + width, bottom + height), size, padding
-        )
+        wh = self.corner_to_pos((back, left + width, bottom + height), size, padding)
+        dh = self.corner_to_pos((back + depth, left, bottom + height), size, padding)
+        dw = self.corner_to_pos((back + depth, left + width, bottom), size, padding)
+        dwh = self.corner_to_pos((back + depth, left + width, bottom + height), size, padding)
         if back_or_front == "back":
             cv2.line(image, o, d, (192, 192, 192), 1, cv2.LINE_AA)
             cv2.line(image, o, w, (192, 192, 192), 1, cv2.LINE_AA)
@@ -120,18 +108,10 @@ class Visulalizer:
         d = self.corner_to_pos((back + depth, left, bottom), size, padding)
         w = self.corner_to_pos((back, left + width, bottom), size, padding)
         h = self.corner_to_pos((back, left, bottom + height), size, padding)
-        wh = self.corner_to_pos(
-            (back, left + width, bottom + height), size, padding
-        )
-        dh = self.corner_to_pos(
-            (back + depth, left, bottom + height), size, padding
-        )
-        dw = self.corner_to_pos(
-            (back + depth, left + width, bottom), size, padding
-        )
-        dwh = self.corner_to_pos(
-            (back + depth, left + width, bottom + height), size, padding
-        )
+        wh = self.corner_to_pos((back, left + width, bottom + height), size, padding)
+        dh = self.corner_to_pos((back + depth, left, bottom + height), size, padding)
+        dw = self.corner_to_pos((back + depth, left + width, bottom), size, padding)
+        dwh = self.corner_to_pos((back + depth, left + width, bottom + height), size, padding)
         cv2.fillPoly(
             image,
             [np.array((d, dh, dwh, dw)).reshape((-1, 1, 2)).astype(np.int32)],

@@ -1,38 +1,34 @@
-import copy
+from dataclasses import replace
 import math
 import random
 import sys
 import time
-from typing import Iterator, TextIO
-
-import numpy as np
+from typing import Iterator
 
 from src.interface import (
     INF,
-    BinPackingRequest,
     Block,
     Corner,
     Image,
     Request,
-    StripPackingRequest,
-    StripPackingResponse,
+    Response,
 )
 from src.logger import get_logger
-from src.utils import calc_top_height_and_corner
+from src.utils import calc_container_score_and_corner
 from src.visualizer import Visulalizer
 
 
-class StripPackingSolver:
+class Solver:
     def __init__(
         self,
-        request: StripPackingRequest,
+        request: Request,
         rng: random.Random = random.Random(),
     ) -> None:
         start = time.time()
         self.request = request
         self.rng = rng
         self.logger = get_logger(self.__class__.__name__, sys.stdout)
-        self.blocks = [block.copy() for block in self.request.blocks]
+        self.blocks = [replace(block) for block in self.request.blocks]
         self.packing_order = self.__initialized_order()
 
         score, corners = self.__calc_score_and_corners()
@@ -40,13 +36,11 @@ class StripPackingSolver:
         self.corners: list[Corner] = corners
 
         self.opt_score: float = score
-        self.opt_blocks: list[Block] = [block.copy() for block in self.blocks]
+        self.opt_blocks: list[Block] = [replace(block) for block in self.blocks]
         self.opt_corners: list[Corner] = corners
 
         self.visualizer = Visulalizer(self.request.container_shape)
-        self.logger.info(
-            f"Initialized in {int(100 * (time.time() - start)) / 100} seconds"
-        )
+        self.logger.info(f"Initialized in {int(100 * (time.time() - start)) / 100} seconds")
 
     def __initialized_order(self) -> list[int]:
         return [
@@ -65,43 +59,12 @@ class StripPackingSolver:
             container_height,
         ) = self.request.container_shape
         blocks = [
-            Block(
-                "wall1",
-                (3 * INF, 3 * INF, 3 * INF),
-                0.0,
-                (0, 0, 0),
-                stackable=True,
-            ),
-            Block(
-                "wall2",
-                (3 * INF, 3 * INF, 3 * INF),
-                0.0,
-                (0, 0, 0),
-                stackable=True,
-            ),
-            Block(
-                "wall3",
-                (3 * INF, 3 * INF, 3 * INF),
-                0.0,
-                (0, 0, 0),
-                stackable=True,
-            ),
-            Block(
-                "wall4",
-                (3 * INF, 3 * INF, 3 * INF),
-                0.0,
-                (0, 0, 0),
-                stackable=True,
-            ),
-            Block(
-                "wall5",
-                (3 * INF, 3 * INF, 3 * INF),
-                0.0,
-                (0, 0, 0),
-                stackable=True,
-            ),
-            # Block(f"wall6", (3 * INF, 3 * INF, 3 * INF),
-            # (0, 0, 0), 0.0, stackable=True),
+            Block("wall1", (3 * INF, 3 * INF, 3 * INF), 0.0, (0, 0, 0), stackable=True),
+            Block("wall2", (3 * INF, 3 * INF, 3 * INF), 0.0, (0, 0, 0), stackable=True),
+            Block("wall3", (3 * INF, 3 * INF, 3 * INF), 0.0, (0, 0, 0), stackable=True),
+            Block("wall4", (3 * INF, 3 * INF, 3 * INF), 0.0, (0, 0, 0), stackable=True),
+            Block("wall5", (3 * INF, 3 * INF, 3 * INF), 0.0, (0, 0, 0), stackable=True),
+            Block("wall6", (3 * INF, 3 * INF, 3 * INF), 0.0, (0, 0, 0), stackable=True),
         ]
         n_walls = len(blocks)
         _corners: list[Corner] = [
@@ -116,8 +79,8 @@ class StripPackingSolver:
         n_unstacked = 0
         for order in self.packing_order:
             block = self.blocks[order]
-            top_height, corner = calc_top_height_and_corner(
-                block, blocks, _corners
+            top_height, corner = calc_container_score_and_corner(
+                block, blocks, _corners, ceil_idx=5
             )
             if top_height >= INF:
                 n_unstacked += 1
@@ -179,7 +142,7 @@ class StripPackingSolver:
             transit = self.__rotate(temparature)
         if transit and self.score <= self.opt_score:
             self.opt_score = self.score
-            self.opt_blocks = [block.copy() for block in self.blocks]
+            self.opt_blocks = [replace(block) for block in self.blocks]
             self.opt_corners = self.corners.copy()
         return transit
 
@@ -197,16 +160,14 @@ class StripPackingSolver:
             self.transit(allow_rotate, temparature)
 
     def render(self, size: int, padding: int) -> Image:
-        return self.visualizer.render(
-            self.opt_blocks, self.opt_corners, size, padding
-        )
+        return self.visualizer.render(self.opt_blocks, self.opt_corners, size, padding)
 
     def solve(
         self,
         max_iter: int,
         allow_rotate: bool,
         temparature: float,
-    ) -> StripPackingResponse:
+    ) -> Response:
         try:
             self.logger.info("start solving ...")
             start = time.time()
@@ -217,11 +178,10 @@ class StripPackingSolver:
                 if n_iter % 100 == 0:
                     t = time.time() - start
                     self.logger.info(
-                        f"optimal score: {self.opt_score}"
-                        f"in {int(t * 100) / 100} seconds."
+                        f"optimal score: {self.opt_score}" f"in {int(t * 100) / 100} seconds."
                     )
             self.logger.info("finish solving !")
         except KeyboardInterrupt:
             self.logger.info("keyboard interrupted")
-        response = StripPackingResponse(self.blocks, self.opt_corners)
+        response = Response(self.blocks, self.opt_corners)
         return response

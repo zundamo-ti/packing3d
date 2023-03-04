@@ -53,9 +53,6 @@ class Block:
         else:
             self.rotatable_axes = (0, 1, 2)
 
-    def copy(self) -> Block:
-        return replace(self)
-
     @property
     def volume(self) -> float:
         return volume(self.shape)
@@ -94,14 +91,6 @@ class Container:
 @dataclass
 class Request:
     blocks: list[Block]
-
-    @property
-    def n_blocks(self) -> int:
-        return len(self.blocks)
-
-
-@dataclass
-class StripPackingRequest(Request):
     container: Container
 
     @property
@@ -112,24 +101,19 @@ class StripPackingRequest(Request):
     def container_volume(self) -> float:
         return volume(self.container.volume)
 
+    @property
+    def n_blocks(self) -> int:
+        return len(self.blocks)
 
-@dataclass
-class BinPackingRequest(Request):
-    containers: list[Container]
+    def block_volume(self, index: int) -> float:
+        return self.blocks[index].volume
 
     @property
-    def n_containers(self) -> int:
-        return len(self.containers)
+    def total_blocks_volume(self) -> float:
+        return sum(block.volume for block in self.blocks)
 
 
 @dataclass
-class StripPackingResponse:
+class Response:
     blocks: list[Block]
     corners: list[Corner]
-
-
-@dataclass
-class BinPackingResponse:
-    blocks: list[Block]
-    corners: list[Corner]
-    container_indexes: list[int]
