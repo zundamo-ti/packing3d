@@ -48,7 +48,7 @@ format = "black src"
 test = "python -m unittest discover -v tests"
 test-coverage = "coverage run --source '.'  -m unittest discover -v tests"
 test-module = "python -m unittest -v"
-app = "streamlit run app/app.py"
+app = "streamlit run app.py"
 data = "python src/data_generator.py"
 
 [tool.coverage.run]
