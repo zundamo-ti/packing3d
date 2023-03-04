@@ -1,4 +1,13 @@
 {
+  "[json]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace",
+    "gitlens.codeLens.scopes": ["document"],
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "python.linting.mypyEnabled": true,
   "python.linting.pylintEnabled": false,
   "python.linting.flake8Enabled": true,
@@ -7,23 +16,12 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
   },
-  "python.languageServer": "Pylance",
-  "python.testing.unittestArgs": [
-    "-v",
-    "-s",
-    "./tests",
-    "-p",
-    "test_*.py"
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/.venv/lib/python3.10/site-packages"
   ],
-  "python.testing.pytestEnabled": false,
-  "python.testing.unittestEnabled": true,
-  "terminal.integrated.env.osx": {
-    "PYTHONPATH": "${workspaceFolder}"
-  },
-  "terminal.integrated.env.windows": {
-    "PYTHONPATH": "${workspaceFolder}"
-  },
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
-  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.terminal.activateEnvironment": false,
+  "python.terminal.activateEnvInCurrentTerminal": false,
   "python.linting.lintOnSave": true
 }
